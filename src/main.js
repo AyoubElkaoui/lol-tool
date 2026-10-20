@@ -92,7 +92,8 @@ async function processChampSelect(session) {
 
     state.champUrl = urls.champion("");
     state.runes = { ...runes, perkInfo, shards: dd.SHARDS, runeUrl: urls.rune("") };
-    state.items = { ...items, names: itemNames, itemUrl: urls.item("").replace(/\.png$/, "") };
+    const itemGold = Object.fromEntries(Object.values(itemData).map((i) => [i.id, i.gold]));
+    state.items = { ...items, names: itemNames, gold: itemGold, itemUrl: urls.item("").replace(/\.png$/, "") };
     state.guide = guide.build({ me, enemy: state.enemy, counterRow: laner?.row || null, runePage: runes.pages[settings.runeChoice === "win" ? 1 : 0] || runes.pages[0], itemBuild: items, itemNames, itemData });
     items.situational = state.guide.situationalIds || items.situational;
     push();

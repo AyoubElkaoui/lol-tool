@@ -88,7 +88,7 @@ function build({ me, enemy, counterRow, runePage, itemBuild, itemNames, itemData
     if (runePage) data.push(`Runes: ${runePage.label} (${runePage.wr}% over ${runePage.n.toLocaleString("nl-NL")} games)`);
     sections.push({ title: "Uit de data", items: data });
   }
-  return { headline: lines, sections, level: lvl?.tag || null, situationalIds };
+  return { headline: lines, sections, level: lvl?.tag || null, situationalIds, counterRow: counterRow ? { vsWr: counterRow.vsWr, n: counterRow.n } : null };
 }
 
 module.exports = { build, load };

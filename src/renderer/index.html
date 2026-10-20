@@ -2,51 +2,69 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://ddragon.leagueoflegends.com data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://ddragon.leagueoflegends.com data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'" />
   <title>LoL Tool</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <div class="brand">LoL Tool</div>
-    <div id="status" class="status">Client zoeken…</div>
-    <div class="settings">
-      <label>Tier
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="gem"></span> LoL Tool</div>
+      <div id="status" class="status"><span class="dot"></span><span class="txt">Client zoeken…</span></div>
+      <div class="actions">
+        <button id="reapply" class="btn ghost" title="Opnieuw ophalen en zetten">↻ Opnieuw</button>
+        <button id="toggleSettings" class="btn ghost" title="Instellingen">⚙</button>
+      </div>
+    </header>
+
+    <aside id="settings" class="settings hidden">
+      <h3>Instellingen</h3>
+      <label class="field"><span>Data van tier</span>
         <select id="tier">
           <option value="bronze">Bronze</option>
           <option value="silver">Silver</option>
-          <option value="gold_plus">Gold+</option>
-          <option value="emerald_plus">Emerald+</option>
-          <option value="all">Alles</option>
+          <option value="gold_plus">Gold en hoger</option>
+          <option value="emerald_plus">Emerald en hoger</option>
+          <option value="all">Alle tiers</option>
         </select>
       </label>
-      <label>Runes
+      <label class="field"><span>Rune page</span>
         <select id="runeChoice">
           <option value="pick">Meest gespeeld</option>
           <option value="win">Hoogste winrate</option>
         </select>
       </label>
-      <label><input type="checkbox" id="autoRunes" /> runes automatisch</label>
-      <label><input type="checkbox" id="autoItems" /> items automatisch</label>
-      <button id="reapply">Opnieuw</button>
-    </div>
-  </header>
+      <label class="switch"><input type="checkbox" id="autoRunes" /><span>Runes automatisch zetten</span></label>
+      <label class="switch"><input type="checkbox" id="autoItems" /><span>Item set automatisch zetten</span></label>
+      <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen pages en sets blijven staan.</p>
+    </aside>
 
-  <main>
-    <section id="matchup" class="card">
-      <div class="empty">Ga in champ select en kies je champion. Runes en item set worden dan automatisch gezet.</div>
-    </section>
+    <main id="main">
+      <section id="hero" class="hero idle">
+        <div class="hero-inner">
+          <div class="idle-art"></div>
+          <h1>Klaar voor champ select</h1>
+          <p>Start League of Legends en kies je champion. Runes, item set en matchup-guide verschijnen hier vanzelf en staan meteen in je client.</p>
+          <ol class="steps">
+            <li><b>1</b> Client aan</li>
+            <li><b>2</b> Champ locken</li>
+            <li><b>3</b> Spelen</li>
+          </ol>
+        </div>
+      </section>
 
-    <div class="grid">
-      <section id="runes" class="card"><h2>Runes</h2><div class="empty">—</div></section>
-      <section id="items" class="card"><h2>Items</h2><div class="empty">—</div></section>
-    </div>
+      <div id="content" class="content hidden">
+        <div class="cols">
+          <section id="runes" class="card"></section>
+          <section id="items" class="card"></section>
+        </div>
+        <section id="guide" class="card guide"></section>
+      </div>
 
-    <section id="guide" class="card"><h2>Guide</h2><div class="empty">—</div></section>
-
-    <section id="log" class="card log"><h2>Log</h2><pre></pre></section>
-  </main>
-
+      <details id="log" class="logbox"><summary>Log</summary><pre></pre></details>
+    </main>
+  </div>
+  <script src="mock.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>
