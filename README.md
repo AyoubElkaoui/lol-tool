@@ -11,9 +11,16 @@ Zet automatisch de beste runes en item set in de League-client zodra je in champ
 ## Voor Windows
 Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelfde.
 
+## Wat de tool doet
+- **Ban-fase:** top-5 bans voor jouw pool in jouw lane (waar je pool het slechtst tegen scoort) + wat de tegenstanders hoveren.
+- **Pick-fase (hoveren is genoeg):** runes (page "LoLTool …" actief), summoner spells, twee item sets ("standaard" en "vs team"), skill order, matchup-guide met winrate-badge.
+- **Hun team:** AD/AP/tank/healer-telling, boots-keuze met reden, defensief item als het nodig is, anti-heal-advies. Werkt live bij als tegenstanders bijkomen.
+- **Na de game:** KDA, CS/min, vision en 1-2 concrete werkpunten.
+- **Instellingen:** profiel (Ayoub top / Danny mid), tier, rune-keuze, auto runes/items/spells, ready check auto-accepteren, venster altijd bovenaan.
+
 ## Hoe het werkt
 - Leest de League-client via de lokale LCU-API (lockfile), niets wordt in de Riot-mappen geschreven.
-- Data: lolalytics (runes, items, matchups per tier) + Riot Data Dragon (namen/plaatjes). Patch wordt automatisch bepaald.
+- Data: lolalytics (runes, items, matchups per tier), u.gg (spells, skill order, startitems, 4e-6e item) + Riot Data Dragon (namen/plaatjes). Patch wordt automatisch bepaald.
 - Runes: maakt een page "LoLTool <champ> vs <tegenstander>" en zet hem actief. Eigen pages blijven staan.
 - Items: zet een item set "LoLTool …" op je champion (Start / eerste 3 / volledig / situationeel).
 - Guide: eigen notities per matchup (`src/guides.json`) + data (winrate, build vs deze tegenstander).
@@ -31,6 +38,9 @@ npm run test:data irelia top jax   # data-laag testen zonder client
 npm run dist:win               # installer bouwen (op Windows)
 ```
 Mac-installers worden door GitHub Actions gebouwd: tag pushen (`git tag v0.1.0 && git push --tags`) → release met .exe en .dmg.
+
+## Mock-modus (ontwerpen zonder League)
+`python -m http.server 5178 --directory src/renderer` en open `http://localhost:5178/index.html?mock=1` (pick), `?mock=ban` (ban-fase + vorige game) of `?mock=idle`.
 
 ## Guides aanvullen
 `src/guides.json`: per champion-slug `algemeen` (altijd), `fallback` (onbekende tegenstander) en `vs.<tegenstander-slug>` (specifiek). Slugs zijn lowercase zonder spaties (`drmundo`, `wukong`, `ksante`).
