@@ -120,3 +120,36 @@ main { padding: 18px; max-width: 1140px; width: 100%; margin: 0 auto; display: g
 .logbox summary { cursor: pointer; padding: 8px 14px; font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
 .logbox pre { margin: 0; padding: 8px 14px 12px; font: 12px/1.5 ui-monospace, Consolas, monospace; color: var(--muted); max-height: 180px; overflow: auto; white-space: pre-wrap; }
 .hidden { display: none !important; }
+
+/* bans */
+.banlist { display: flex; gap: 10px; flex-wrap: wrap; }
+.ban { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border: 1px solid var(--line2); border-radius: 10px; background: rgba(1,10,19,.4); min-width: 230px; }
+.ban img { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--bad); }
+.ban b { display: block; }
+.ban small { color: var(--muted); font-size: 11px; }
+.hovers { margin-top: 10px; color: var(--muted); font-size: 13px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.hovers img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line2); }
+/* team */
+.teamrow { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }
+.pill b { color: var(--text); }
+.teamnotes { margin: 10px 0 0; padding-left: 18px; color: var(--text); }
+.teamnotes li { margin: 3px 0; }
+.enemies { display: flex; gap: 6px; }
+.enemies img { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--bad); }
+/* spells & skills */
+.spellrow { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.spells { display: flex; gap: 8px; align-items: center; }
+.spells img { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--gold-dim); }
+.skills { display: flex; gap: 4px; flex-wrap: wrap; }
+.skill { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 5px; background: var(--bg2); border: 1px solid var(--line2); font-size: 11px; font-weight: 800; color: var(--muted); }
+.skill.Q { color: #4aa3ff; } .skill.W { color: #3dd68c; } .skill.E { color: #f5b942; } .skill.R { color: #ff5c5c; }
+.prio { font-weight: 800; letter-spacing: 2px; color: var(--gold2); }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.tab { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); font-size: 12px; cursor: pointer; background: transparent; }
+.tab.on { border-color: var(--gold); color: var(--gold); }
+/* post-game */
+.pg { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+.pg .stat { text-align: center; } .pg .stat b { display: block; font-size: 20px; } .pg .stat span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.pg .win { color: var(--good); font-weight: 800; } .pg .loss { color: var(--bad); font-weight: 800; }
+.pgtips { margin: 10px 0 0; padding-left: 18px; }

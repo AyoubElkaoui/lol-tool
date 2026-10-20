@@ -50,7 +50,49 @@
       ]
     }
   },
-  "teemo": [],
+  "teemo": {
+    "algemeen": [
+      "Level 1-2 ben je de baas: auto-Q-auto zodra hij een minion wil pakken, dan weglopen. Zo win je de lane in de eerste 3 waves.",
+      "Shrooms zijn je map-control: river-bush, tri-bush en de pad naar je eigen jungle. Nooit in een rechte lijn op de lane.",
+      "Powerspike: Nashor's Tooth + Sorcerer's Shoes. Daarna Liandry's/Blackfire tegen tanks, Deathcap als je snowballt.",
+      "Teamfights: nooit frontaal. Sta op de rand, blind de carry die naar je team loopt, shroom de uitgang.",
+      "Side-lane na 2 items: push en shroom tussen hun jungle en de lane; vecht niet 1v1 tegen fighters zonder blind."
+    ],
+    "fallback": [
+      "Trade met blind (Q) als hij op je wil, loop weg; farm met auto's. Jij wint de lane via poke, niet via all-ins."
+    ],
+    "vs": {
+      "jax": [
+        "Blind (Q) precies als hij Q op je springt: dan mist hij alle auto's. Hou Q daarvoor, niet voor poke.",
+        "Zijn E (counter strike) blokkeert auto's: niet auto'en terwijl hij hem draait.",
+        "Na level 6 shroom je eigen escape-route; hij all-int je met ult.",
+        "Vroeg Nashor's, dan Rylai's om zijn Q-springen te vertragen."
+      ],
+      "tryndamere": [
+        "Pre-6: blind elke keer dat hij op je wil; hij kan niets zonder auto's.",
+        "Post-6: nooit onder 40% hp in zijn range, hij ult en pakt je.",
+        "Rylai's + Liandry's, Zhonya's als hij fed is.",
+        "Sta altijd met shrooms achter je bij de tower."
+      ],
+      "darius": [
+        "Blijf buiten zijn E-range; blind hem als hij toch E raakt en loop.",
+        "Zijn passive (bleed) doet niets als je niet 5 keer geraakt wordt: korte trades, nooit lang.",
+        "Shroom de river, hij wordt gegankt en kan niet weg.",
+        "Blackfire Torch tegen zijn hp-stacking."
+      ],
+      "garen": [
+        "Hij zit onder zijn tower als jij 3 waves pokt: Q zodra hij Q activeert, dan is zijn silence verspild.",
+        "Loop uit zijn E (spin) weg zodra hij begint, nooit erin blijven.",
+        "Na 6 ult hij jou onder 30% hp: back vroeg, blijf hoog.",
+        "Liandry's eerst: hij bouwt armor/hp."
+      ],
+      "sett": [
+        "Zijn W (Haymaker) komt na een lange trade: trade kort, dan weg; blind als hij de grit vol heeft.",
+        "Niet dicht bij muren staan (E-pull).",
+        "Rylai's om zijn walk-up te stoppen."
+      ]
+    }
+  },
   "jax": {
     "algemeen": [
       "Jij schaalt: eerste 10 minuten niet sterven, farm met W op minions.",

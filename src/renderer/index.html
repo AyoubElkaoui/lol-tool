@@ -19,6 +19,12 @@
 
     <aside id="settings" class="settings hidden">
       <h3>Instellingen</h3>
+      <label class="field"><span>Profiel</span>
+        <select id="profile">
+          <option value="ayoub">Ayoub (top: Irelia / Teemo / Jax)</option>
+          <option value="danny">Danny (mid: Galio / Ziggs / Veigar)</option>
+        </select>
+      </label>
       <label class="field"><span>Data van tier</span>
         <select id="tier">
           <option value="bronze">Bronze</option>
@@ -35,7 +41,10 @@
         </select>
       </label>
       <label class="switch"><input type="checkbox" id="autoRunes" /><span>Runes automatisch zetten</span></label>
-      <label class="switch"><input type="checkbox" id="autoItems" /><span>Item set automatisch zetten</span></label>
+      <label class="switch"><input type="checkbox" id="autoItems" /><span>Item sets automatisch zetten</span></label>
+      <label class="switch"><input type="checkbox" id="autoSpells" /><span>Summoner spells automatisch zetten</span></label>
+      <label class="switch"><input type="checkbox" id="autoAccept" /><span>Ready check automatisch accepteren</span></label>
+      <label class="switch"><input type="checkbox" id="alwaysOnTop" /><span>Venster altijd bovenaan</span></label>
       <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen pages en sets blijven staan.</p>
     </aside>
 
@@ -53,11 +62,16 @@
         </div>
       </section>
 
+      <section id="bans" class="card hidden"></section>
+      <section id="postgame" class="card hidden"></section>
+
       <div id="content" class="content hidden">
+        <section id="team" class="card hidden"></section>
         <div class="cols">
           <section id="runes" class="card"></section>
           <section id="items" class="card"></section>
         </div>
+        <section id="spells" class="card hidden"></section>
         <section id="guide" class="card guide"></section>
       </div>
 

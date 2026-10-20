@@ -53,7 +53,7 @@ function rankSituational(ids, itemData, enemy) {
   return [...ids].sort((a, b) => score(b) - score(a));
 }
 
-function build({ me, enemy, counterRow, runePage, itemBuild, itemNames, itemData }) {
+function build({ me, enemy, counterRow, runePage, itemBuild, itemNames, itemData, team, teamBuild, spells, skills }) {
   const g = load();
   const own = g[me.lolaSlug] || g[me.slug?.toLowerCase()] || {};
   const specific = enemy ? own.vs?.[enemy.lolaSlug] : null;
@@ -86,7 +86,17 @@ function build({ me, enemy, counterRow, runePage, itemBuild, itemNames, itemData
       if (why.length) data.push("Waarom: " + why.join("; "));
     }
     if (runePage) data.push(`Runes: ${runePage.label} (${runePage.wr}% over ${runePage.n.toLocaleString("nl-NL")} games)`);
+    if (spells?.names?.length) data.push(`Spells: ${spells.names.join(" + ")}`);
+    if (skills?.priority) data.push(`Skill order: ${skills.priority.split("").join(" > ")}`);
     sections.push({ title: "Uit de data", items: data });
+    if (team?.count >= 3) {
+      const t = [];
+      t.push(`Hun team: ${team.ad.length} AD, ${team.ap.length} AP, ${team.tanks.length} tank${team.healers.length ? ", healers: " + team.healers.join("/") : ""}.`);
+      if (teamBuild?.boots) t.push(`Boots: ${n(teamBuild.boots.id)} (${teamBuild.boots.why}).`);
+      if (teamBuild?.changed) t.push(`Vs dit team: ${teamBuild.build.map(n).join(" → ")}`);
+      for (const note of team.notes) t.push(note);
+      sections.push({ title: "Tegen dit team", items: t });
+    }
   }
   return { headline: lines, sections, level: lvl?.tag || null, situationalIds, counterRow: counterRow ? { vsWr: counterRow.vsWr, n: counterRow.n } : null };
 }

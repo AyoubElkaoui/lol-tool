@@ -115,6 +115,7 @@ class LcuClient {
   async post(endpoint, body) { return request(this.creds, "POST", endpoint, body); }
   async put(endpoint, body) { return request(this.creds, "PUT", endpoint, body); }
   async del(endpoint) { return request(this.creds, "DELETE", endpoint); }
+  async patch(endpoint, body) { return request(this.creds, "PATCH", endpoint, body); }
 
   async gameflowPhase() {
     try { return await this.get("/lol-gameflow/v1/gameflow-phase"); } catch { return "None"; }
