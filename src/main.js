@@ -61,15 +61,17 @@ async function resolveEnemyLaner(meSlug, lane, enemyIds, champs, patch) {
 async function processChampSelect(session) {
   const myCell = session.localPlayerCellId;
   const meRow = (session.myTeam || []).find((p) => p.cellId === myCell);
-  if (!meRow || !meRow.championId) { return; }
+  // Hoveren (pick intent) is al genoeg; bij lock-in wordt championId gezet.
+  const myChampId = meRow?.championId || meRow?.championPickIntent || 0;
+  if (!meRow || !myChampId) { return; }
   const lane = LANE[meRow.assignedPosition] || null;
   const enemyIds = (session.theirTeam || []).map((p) => p.championId).filter((x) => x > 0);
-  const key = `${meRow.championId}|${lane}|${enemyIds.sort().join(",")}`;
+  const key = `${myChampId}|${lane}|${enemyIds.sort().join(",")}`;
   if (key === lastKey || busy) return;
   busy = true; lastKey = key;
   try {
     const champs = await dd.champions();
-    const me = champs[meRow.championId];
+    const me = champs[myChampId];
     const patch = await dd.lolalyticsPatch();
     const slug = dd.lolalyticsSlug(me);
     const useLane = lane || "top";
