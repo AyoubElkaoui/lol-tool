@@ -1,0 +1,173 @@
+{
+  "irelia": {
+    "algemeen": [
+      "Level 1-2: alleen traden als je Q-reset op minions kunt pakken; zonder reset ben je zwak.",
+      "Powerspike: level 3 (W) en eerste item. Daarvoor niet all-in zonder jungle.",
+      "Q-resets zijn alles: zet minions laag voordat je de tegenstander opzoekt, dan heb je 3-4 dashes.",
+      "E-stun altijd door de tegenstander plaatsen, niet ernaast; mis je E, trek je terug.",
+      "Na 2 items kun je side-lane splitten; join teamfights alleen via flank, nooit frontaal."
+    ],
+    "fallback": [
+      "Onbekende matchup: farm veilig tot level 3, trade kort met Q-reset en loop weg.",
+      "Koop Doran's Blade + 1 pot; eerste back met 1100+ goud."
+    ],
+    "vs": {
+      "jax": [
+        "Trade NOOIT in zijn E (counter strike); wacht tot hij hem gebruikt heeft, dan all-in.",
+        "Pre-6 ben jij sterker als je Q-resets hebt; na zijn eerste item (Trinity/Divine) kantelt het.",
+        "Hou je E voor als hij op je springt (Q); stun hem uit zijn combo.",
+        "Vroeg Wit's End of Plated Steelcaps tegen zijn on-hit damage."
+      ],
+      "sett": [
+        "Zijn W (Haymaker) ontwijk je met een Q-dash op een minion, niet door weg te lopen.",
+        "Trade als zijn grit-balk leeg is; hij wint lange trades als hij vol zit.",
+        "Niet in de muur-E laten trekken: sta niet tussen hem en een minion-wave.",
+        "Blijf buiten zijn Q-range als hij level 1-2 agressief is; jij wint na level 3."
+      ],
+      "darius": [
+        "Blijf UIT zijn Q-buitenrand: sta dicht op hem of ver weg, nooit op 450 range.",
+        "Zijn E (pull) heeft cooldown 24s: trade direct nadat hij hem mist.",
+        "Boven 5 stacks loop je weg of dash je door minions; hij wint elke lange trade.",
+        "Kies Steelcaps + Wit's End; let op zijn ult-executes onder 25% hp."
+      ],
+      "malphite": [
+        "Hij bouwt armor; jouw AD-damage doet weinig, dus kies Blade of the Ruined King als tweede item.",
+        "Zijn Q poke is zijn enige druk: trade terug zodra hij Q gebruikt (cooldown 8s).",
+        "Na 6 kan hij je altijd stunnen met R; speel niet op 400+ range van je minions.",
+        "Win de lane via farm, niet via kills; roam niet, hij pusht dan gratis."
+      ],
+      "garen": [
+        "Trade pas na zijn Q (silence); loop zijn E (spin) uit door achter een minion te dashen.",
+        "Hij heeft geen escape: met jungle-gank is hij dood na level 6.",
+        "Niet onder 40% hp blijven bij 6: zijn R executet.",
+        "Steelcaps vroeg, Bramble Vest als hij snowballt."
+      ],
+      "tryndamere": [
+        "Vroeg (level 1-3) ben jij sterker; hij schaalt met crit. Druk hem onder tower vóór level 6.",
+        "Na zijn R (5 sec onsterfelijk) altijd terugtrekken, niet erin blijven vechten.",
+        "Executioner's Calling tegen zijn healing; Steelcaps tegen crits.",
+        "Vraag jungle vroeg, hij heeft geen dash door een stun heen."
+      ]
+    }
+  },
+  "teemo": [],
+  "jax": {
+    "algemeen": [
+      "Jij schaalt: eerste 10 minuten niet sterven, farm met W op minions.",
+      "E (counter strike) start je ALTIJD als je in een trade gaat, niet als reactie.",
+      "Powerspike: Trinity/Divine + Steelcaps. Daarna split-pushen en 1v1 pakken.",
+      "Q naar een ward of minion om te ontsnappen; hou Q voor een escape als de jungler mist."
+    ],
+    "fallback": [
+      "Farm, scale, geen risico voor je eerste item.",
+      "Trade pas met E actief en loop weg als E afloopt."
+    ],
+    "vs": {
+      "warwick": [
+        "Hij wint vroeg via Q-heal; trade kort en loop weg, geen lange trades voor level 6.",
+        "Zijn E vermindert damage: stop auto's tijdens zijn E-fear.",
+        "Executioner's Calling vroeg, daarna BotRK.",
+        "Hij pakt je in de jungle met zijn W-speed: ward river."
+      ],
+      "volibear": [
+        "Niet traden als zijn W-mark op je staat (hij heelt en doet dubbel).",
+        "Zijn Q-stun ontwijk je met E-stun op het juiste moment.",
+        "Vroeg Bramble Vest tegen zijn sustain.",
+        "Na 6 kan hij je tower uitzetten: vecht niet onder je eigen tower."
+      ],
+      "sett": [
+        "Trade als zijn grit laag is; zijn W-damage schaalt met wat jij hem aandoet.",
+        "Laat je E hem stunnen uit zijn W (Haymaker) voor een gratis trade.",
+        "Hij wint level 1-2; begin met passief farmen tot je E hebt."
+      ],
+      "riven": [
+        "Haar burst zit in Q3/W-combo: E-stun timen op haar derde Q.",
+        "Vroeg Steelcaps + Bramble; na Trinity win jij elke lange trade.",
+        "Als haar E-shield (schild) actief is, geen trades starten."
+      ],
+      "malphite": [
+        "Ga BotRK + Divine Sunderer; geen crit-items tegen zijn armor.",
+        "Hij kan niet tegen split-push: push side lanes na 2 items.",
+        "Zijn Q-poke is zijn enige druk, trade terug als hij Q heeft gebruikt."
+      ]
+    }
+  },
+  "galio": {
+    "algemeen": [
+      "Jouw taak is hard-engage voor je team: W-taunt + R over je laner als zijn jungler gankt.",
+      "Lane: farm met Q, trade kort met E-W-auto en loop weg; je wint geen lange trades.",
+      "Powerspike: level 6 en Rocketbelt. Roam na 6 als je lane gepusht is.",
+      "Vecht nooit alleen in de river; je bent een counter-engage, geen duelist."
+    ],
+    "fallback": [
+      "Veilig farmen, E alleen als je zeker een trade wint of een gank wilt setten."
+    ],
+    "vs": {
+      "yasuo": [
+        "Je W-taunt gaat niet door zijn windwall; taunt op een moment dat hij net Q-dasht.",
+        "Vroeg Steelcaps + Seeker's Armguard; hij wint auto-trades.",
+        "Laat hem pushen en roep jungle: hij dive't vaak te diep."
+      ],
+      "katarina": [
+        "Je W-taunt stopt haar R volledig: hou W tot ze R gebruikt.",
+        "Zet geen Q-poke op haar daggers; ze gaat dan op je in.",
+        "Mercury's Treads en snelle Zhonya's."
+      ],
+      "malzahar": [
+        "Zijn R gaat door je schild heen: koop Quicksilver Sash of Mercury's.",
+        "Push de wave onder zijn toren en roam; je wint de lane niet direct."
+      ]
+    }
+  },
+  "ziggs": {
+    "algemeen": [
+      "Blijf achter minions en poke met Q; jouw lane-damage is Q-spam plus passive auto.",
+      "W (bounce) is je escape, niet je engage: hou hem voor jungle-ganks.",
+      "Powerspike: Luden's/Blackfire + Sorcerer's Shoes. Daarna torens slopen met W op toren onder 25%.",
+      "Teamfights: sta ver achter, R op de frontline, nooit frontaal."
+    ],
+    "fallback": [
+      "Farm met Q, trade alleen als je 3 spells kunt raken, anders weg."
+    ],
+    "vs": {
+      "yasuo": [
+        "Hij dasht door je minions naar je toe: sta nooit tussen 2 minions.",
+        "W-bounce ALTIJD beschikbaar houden om uit zijn dash te komen.",
+        "Vroeg Seeker's Armguard, daarna Zhonya's."
+      ],
+      "zed": [
+        "Na zijn R: direct W-bounce weg en Zhonya's zodra je het hebt.",
+        "Level 1-5 win jij via poke; druk hem laag voor level 6.",
+        "Ward de side-bush, hij roamt na 6."
+      ]
+    }
+  },
+  "veigar": {
+    "algemeen": [
+      "Je bent een farm-champ: elke Q op een minion is +stack. Doel: 100 stacks op 15 min.",
+      "E (cage) is een dubbele muur: zet hem zodat de rand op de tegenstander valt, niet het midden.",
+      "Powerspike: Rod of Ages + Seraph's, dan Rabadon's. Daarvoor niet vechten.",
+      "R is een execute: alleen onder 40% hp gebruiken, anders is het verspilling."
+    ],
+    "fallback": [
+      "Farm en stack, trade niet. Jouw lane win je om 25 minuten, niet om 5."
+    ],
+    "vs": {
+      "yasuo": [
+        "Cage ZODRA hij Q3-tornado klaar heeft: hij dasht erin.",
+        "Zhonya's vroeg, hij dive't op 6.",
+        "Nooit Q op minions als hij op 2 dashes afstand staat."
+      ],
+      "fizz": [
+        "Cage op jezelf als hij E (playful) gebruikt: hij landt in de stun.",
+        "Zhonya's als tweede item, altijd.",
+        "Blijf onder toren tot Rod of Ages."
+      ],
+      "katarina": [
+        "Cage op haar dagger-landing: haar E brengt haar erin.",
+        "Verlaat de cage-radius nooit zonder W-combo klaar.",
+        "Mercury's + Zhonya's; vraag jungle pre-6, ze heeft geen escape zonder dagger."
+      ]
+    }
+  }
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://ddragon.leagueoflegends.com data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>LoL Tool</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">LoL Tool</div>
+    <div id="status" class="status">Client zoeken…</div>
+    <div class="settings">
+      <label>Tier
+        <select id="tier">
+          <option value="bronze">Bronze</option>
+          <option value="silver">Silver</option>
+          <option value="gold_plus">Gold+</option>
+          <option value="emerald_plus">Emerald+</option>
+          <option value="all">Alles</option>
+        </select>
+      </label>
+      <label>Runes
+        <select id="runeChoice">
+          <option value="pick">Meest gespeeld</option>
+          <option value="win">Hoogste winrate</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="autoRunes" /> runes automatisch</label>
+      <label><input type="checkbox" id="autoItems" /> items automatisch</label>
+      <button id="reapply">Opnieuw</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="matchup" class="card">
+      <div class="empty">Ga in champ select en kies je champion. Runes en item set worden dan automatisch gezet.</div>
+    </section>
+
+    <div class="grid">
+      <section id="runes" class="card"><h2>Runes</h2><div class="empty">—</div></section>
+      <section id="items" class="card"><h2>Items</h2><div class="empty">—</div></section>
+    </div>
+
+    <section id="guide" class="card"><h2>Guide</h2><div class="empty">—</div></section>
+
+    <section id="log" class="card log"><h2>Log</h2><pre></pre></section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
