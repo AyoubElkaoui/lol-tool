@@ -41,7 +41,7 @@ function renderHero(s) {
 
 function renderBans(s) {
   const b = $("#bans");
-  const show = s.phase === "ChampSelect" && s.bans && !s.me;
+  const show = s.phase === "ChampSelect" && s.bans && (s.inBan || !s.me);
   b.classList.toggle("hidden", !show);
   if (!show) return;
   const list = s.bans.list || [];

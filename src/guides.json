@@ -309,5 +309,63 @@
         "Oracle Lens bij boxen in bush."
       ]
     }
+  },
+  "fiddlesticks": {
+    "algemeen": [
+      "Clear: start met W op de buff (W-channel heelt), E om te stunnen; full clear naar scuttle op ~3:20. Jij bent een van de snelste full-clearers.",
+      "Gank alleen met fear (Q) vanuit een bush of fog of war: Q vanuit onzichtbaarheid feart. Rechtdoor de lane in is nutteloos.",
+      "Powerspike: level 6. Je R is een teamfight: alleen vanuit een bush/fog, nooit zichtbaar lopen. Een R uit het zicht wint games in deze elo.",
+      "Effigy (scarecrow) op hun jungle-ingangen: gratis vision en ze trappen erin.",
+      "Build: Liandry's → Sorcerer's → Zhonya's (verplicht, je staat midden in de fight) → Rylai's/Morello. Rabadon's als je snowballt."
+    ],
+    "fallback": [
+      "Clear, R vanuit een bush op 2+ tegenstanders, Zhonya's als 3e item. Vecht niet 1v1 voor 6."
+    ],
+    "vs": {
+      "leesin": [
+        "Hij invadet level 2-3: start aan de kant van je bot-lane, zet een effigy op je andere buff.",
+        "Jij wint na 6 als je R uit de fog kan zetten; vermijd 1v1 in open gebied.",
+        "Ward (effigy) zijn pad; zijn ganks zijn pre-6 je grootste gevaar."
+      ],
+      "masteryi": [
+        "Pre-6 ben jij sterker: invade zijn buff level 3 met laner.",
+        "Na 2 items: hou E (stun) voor hem, dan R. Zonder stun doodt hij je.",
+        "Zhonya's 2e item tegen hem, niet 3e."
+      ],
+      "warwick": [
+        "Hij ruikt je als je laag bent: niet onder 50% hp farmen.",
+        "Jouw fear onderbreekt zijn R-sprong: Q op de sprong.",
+        "Executioner's/Morello vroeg."
+      ]
+    }
+  },
+  "nocturne": {
+    "algemeen": [
+      "Clear: E op de grote camp, Q-trail voor speed, W voor de auto-attack-blok. Full clear in ~3:15; power-farm tot 6.",
+      "Level 6 is je gank: R (paranoia) vanuit je eigen jungle op de lane die het meest gepusht staat. Spellshield (W) timen op hun CC.",
+      "Build: Stridebreaker/Eclipse → Ionian boots → Black Cleaver/Death's Dance → Guardian Angel. Lethality (Eclipse/Serylda) als hun team squishy is.",
+      "Teamfights: R op de carry, niet op de tank. Als de carry een flash/dash heeft: wacht tot die gebruikt is.",
+      "Side-lane na 2 items: splitpush met R als teleport naar fights."
+    ],
+    "fallback": [
+      "Farm tot 6, dan R-gank de lane die gepusht staat. Hou W voor hun belangrijkste CC."
+    ],
+    "vs": {
+      "leesin": [
+        "Hij is sterker pre-6: niet 1v1 in de river, farm.",
+        "Na 6 kun jij elke 1v1 winnen als je W op zijn Q zet.",
+        "Counter-gank in plaats van gank: hij komt naar jouw lanes."
+      ],
+      "udyr": [
+        "Niet 1v1 na 6: zijn stun + shield wint. Speel de andere kant van de map.",
+        "R-gank zijn laners terwijl hij aan het farmen is.",
+        "Bramble 2e item als hij Phoenix speelt."
+      ],
+      "masteryi": [
+        "Invade zijn 2e buff level 3 met laner.",
+        "Na 2 items: W op zijn Q (alpha) spellshield blokkeert de slow/R niet, wel zijn auto-reset; vecht alleen met CC in je team.",
+        "Executioner's tegen zijn W-heal."
+      ]
+    }
   }
 }

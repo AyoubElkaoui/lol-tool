@@ -49,7 +49,7 @@
       ] },
     log: ["16:03:40  Item set gezet: Irelia vs Jax", "16:03:39  Runes gezet: Irelia vs Jax", "16:03:38  Tegenstander in lane: Jax (46.6% wr)", "16:03:37  Champ select: Irelia (top)", ...idle.log],
   };
-  const ban = { ...idle, phase: "ChampSelect", champUrl: full.champUrl, bans: { lane: "top", pool: ["irelia", "teemo", "jax"], list: [
+  const ban = { ...idle, phase: "ChampSelect", inBan: true, champUrl: full.champUrl, bans: { lane: "top", pool: ["irelia", "teemo", "jax"], list: [
       { cid: 54, champ: { id: 54, name: "Malphite", slug: "Malphite", image: "Malphite.png" }, parts: ["irelia: 44.2%", "teemo: 47.0%", "jax: 46.1%"] },
       { cid: 875, champ: { id: 875, name: "Sett", slug: "Sett", image: "Sett.png" }, parts: ["irelia: 46.2%", "teemo: 49.0%", "jax: 47.5%"] },
       { cid: 23, champ: { id: 23, name: "Tryndamere", slug: "Tryndamere", image: "Tryndamere.png" }, parts: ["irelia: 48.0%", "teemo: 45.1%", "jax: 48.9%"] },

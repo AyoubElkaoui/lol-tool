@@ -17,7 +17,7 @@ let win = null;
 
 const PROFILES = {
   ayoub: { name: "Ayoub", lane: "top", pool: ["irelia", "teemo", "jax"] },
-  danny: { name: "Danny", lane: "jungle", pool: ["leesin", "udyr", "masteryi"] },
+  danny: { name: "Danny", lane: "jungle", pool: ["fiddlesticks", "nocturne", "leesin", "udyr", "masteryi"] },
 };
 
 const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
@@ -26,7 +26,7 @@ function loadSettings() { try { settings = { ...settings, ...JSON.parse(fs.readF
 function saveSettings() { fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2)); }
 
 const blank = () => ({
-  me: null, lane: null, enemy: null, enemies: [], team: null, bans: null,
+  me: null, lane: null, enemy: null, enemies: [], team: null, bans: null, inBan: false,
   runes: null, items: null, teamBuild: null, spells: null, skills: null, guide: null,
   applied: { runes: null, items: null, spells: null },
 });
@@ -53,10 +53,13 @@ async function processBans(session, champs, patch) {
   for (const a of (session.actions || []).flat()) if (a.completed && a.championId > 0) taken.add(a.championId);
   for (const p of [...(session.myTeam || []), ...(session.theirTeam || [])]) if (p.championId > 0) taken.add(p.championId);
   const hovers = (session.theirTeam || []).map((p) => p.championPickIntent || p.championId).filter((x) => x > 0);
-  const key = `${lane}|${[...taken].sort().join(",")}|${hovers.join(",")}`;
+  const key = `${lane}|${[...taken].sort().join(",")}|${hovers.join(",")}|${meRow?.championPickIntent || 0}`;
   if (key === lastBanKey) return;
   lastBanKey = key;
-  const pool = PROFILES[settings.profile].pool;
+  const pool = [...PROFILES[settings.profile].pool];
+  // Hover je een champ buiten je pool, dan telt die mee (zodat het ook werkt als je iets anders speelt).
+  const myHover = champs[meRow?.championPickIntent || meRow?.championId || 0];
+  if (myHover && !pool.includes(myHover.lolaSlug)) pool.unshift(myHover.lolaSlug);
   const poolCounters = [];
   for (const slug of pool) poolCounters.push({ slug, list: await countersFor(slug, lane, patch) });
   state.bans = { lane, ...an.banAdvice({ poolCounters, lane, taken, champs, enemyHovers: hovers }), pool };
@@ -151,8 +154,12 @@ async function processPick(session, champs, patch) {
 async function processChampSelect(session) {
   const champs = await dd.champions();
   const patch = await dd.lolalyticsPatch();
-  const inBan = session.timer?.phase === "BAN_PICK" && (session.actions || []).flat().some((a) => a.type === "ban" && !a.completed && a.isInProgress);
-  if (inBan || session.timer?.phase === "PLANNING") await processBans(session, champs, patch);
+  if (!state.champUrl) { const urls = await dd.imageUrls(); state.champUrl = urls.champion(""); }
+  const actions = (session.actions || []).flat();
+  const bansOpen = actions.some((a) => a.type === "ban" && !a.completed);
+  const inBan = session.timer?.phase === "PLANNING" || (session.timer?.phase === "BAN_PICK" && bansOpen);
+  if (inBan !== state.inBan) { state.inBan = inBan; push(); }
+  if (inBan) await processBans(session, champs, patch);
   await processPick(session, champs, patch);
 }
 
