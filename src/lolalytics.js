@@ -68,4 +68,30 @@ async function counters(opts) {
   return { stats: d?.stats || null, list: Array.isArray(d?.counters) ? d.counters : [] };
 }
 
-module.exports = { runePages, itemBuild, counters };
+// Welke patch-waarde heeft genoeg data? Direct na een nieuwe patch is de nieuwe
+// bijna leeg; dan nemen we de vorige of "30" (laatste 30 dagen).
+const patchMemo = new Map();
+async function resolvePatch(ddPatch, slug, lane, tier) {
+  const key = `${ddPatch}|${tier}`;
+  if (patchMemo.has(key) && Date.now() - patchMemo.get(key).t < 60 * 60 * 1000) return patchMemo.get(key).v;
+  const [maj, min] = ddPatch.split(".").map(Number);
+  const candidates = [ddPatch, `${maj}.${min - 1}`, "30"];
+  let best = { patch: "30", n: 0 };
+  for (const patch of candidates) {
+    try {
+      const d = await call(base("rune", { patch, slug, lane, tier }));
+      const n = d?.summary?.runes?.pick?.n || 0;
+      if (n >= 50000) { best = { patch, n }; break; }
+      if (n > best.n) best = { patch, n };
+    } catch { /* volgende */ }
+  }
+  patchMemo.set(key, { t: Date.now(), v: best.patch });
+  return best.patch;
+}
+
+// Lane-verdeling van een champion (uit de rune-header): om de tegenstander in jouw lane te vinden.
+async function defaultLane(opts) {
+  try { const d = await call(base("rune", opts)); return d?.header?.defaultLane || null; } catch { return null; }
+}
+
+module.exports = { runePages, itemBuild, counters, resolvePatch, defaultLane };

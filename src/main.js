@@ -73,8 +73,23 @@ async function resolveEnemyLaner(meSlug, lane, enemyIds, champs, patch) {
   const list = await countersFor(meSlug, lane, patch);
   const rows = list.filter((r) => enemyIds.includes(r.cid));
   const inLane = rows.filter((r) => r.defaultLane === lane).sort((a, b) => b.n - a.n);
-  const row = inLane[0] || null;
-  return row ? { champ: champs[row.cid], row } : null;
+  if (inLane[0]) return { champ: champs[inLane[0].cid], row: inLane[0] };
+  // Niet in de counter-data (nieuwe champ, weinig games): kijk per tegenstander waar hij meestal speelt.
+  for (const id of enemyIds) {
+    const c = champs[id]; if (!c) continue;
+    const dl = await lol.defaultLane({ patch, slug: c.lolaSlug, lane, tier: settings.tier });
+    if (dl === lane) { const row = rows.find((r) => r.cid === id) || null; return { champ: c, row }; }
+  }
+  return null;
+}
+
+// Startitems als u.gg niet bereikbaar is: op klasse.
+function fallbackStarters(me, lane) {
+  if (lane === "jungle") return [1101, 2003]; // jungle pet + pot
+  if (me.tags?.includes("Mage") || an.dmgType(me) === "AP") return [1056, 2003];
+  if (me.tags?.includes("Tank") && !me.tags?.includes("Fighter")) return [1054, 2003];
+  if (lane === "support") return [3865, 2003];
+  return [1055, 2003]; // Doran's Blade + pot
 }
 
 async function processPick(session, champs, patch) {
@@ -111,9 +126,9 @@ async function processPick(session, champs, patch) {
     if (!sameChamp || !runes || !items) {
       runes = await lol.runePages(opts);
       items = await lol.itemBuild(opts, isBoot);
-      try { u = await ugg.overview({ patch, championId: me.id, lane, tier: settings.tier }); }
+      try { u = await ugg.overview({ patch: await dd.lolalyticsPatch(), championId: me.id, lane, tier: settings.tier }); }
       catch (e) { u = null; log("u.gg (spells/skills) niet beschikbaar: " + e.message); }
-      if (u?.starters?.length) items.starters = u.starters;
+      items.starters = u?.starters?.length ? u.starters : fallbackStarters(me, lane);
       const perkInfo = {};
       for (const p of runes.pages) for (const id of [...p.pri, ...p.sec]) { perkInfo[id] = await dd.perkInfo(id); if (perkInfo[id]) perkInfo[perkInfo[id].style] = await dd.perkInfo(perkInfo[id].style); }
       state.champUrl = urls.champion("");
@@ -153,7 +168,8 @@ async function processPick(session, champs, patch) {
 
 async function processChampSelect(session) {
   const champs = await dd.champions();
-  const patch = await dd.lolalyticsPatch();
+  if (settings.tier === "all") settings.tier = "gold_plus";
+  const patch = await lol.resolvePatch(await dd.lolalyticsPatch(), "irelia", "top", settings.tier);
   if (!state.champUrl) { const urls = await dd.imageUrls(); state.champUrl = urls.champion(""); }
   const actions = (session.actions || []).flat();
   const bansOpen = actions.some((a) => a.type === "ban" && !a.completed);

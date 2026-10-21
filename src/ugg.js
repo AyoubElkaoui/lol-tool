@@ -4,10 +4,8 @@
 // Structuur: data[region][tier][role] = [ [runes], [spells], [start], [core], [skills], [itemOptions], [games], ?, [shards], ... ]
 // region 12 = wereld; role 1=jungle 2=support 3=adc 4=top 5=mid.
 
-const HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36",
-  Referer: "https://u.gg/", Origin: "https://u.gg",
-};
+// Let op: met Referer/Origin-headers geeft u.gg 403; zonder werkt het.
+const HEADERS = { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15" };
 const ROLE = { jungle: "1", support: "2", bottom: "3", top: "4", middle: "5" };
 // u.gg tier-ids: 7 bronze, 6 silver, 5 gold, 10 platinum_plus, 16 emerald_plus, 12 overall(ish)
 const TIER = { bronze: "7", silver: "6", gold_plus: "10", emerald_plus: "16", all: "10" };
@@ -17,10 +15,14 @@ async function overview({ patch, championId, lane, tier }) {
   const key = `${patch}|${championId}`;
   let data = memo.get(key)?.v;
   if (!data || Date.now() - memo.get(key).t > 30 * 60 * 1000) {
-    const url = `https://stats2.u.gg/lol/1.5/overview/${patch.replace(".", "_")}/ranked_solo_5x5/${championId}/1.5.0.json`;
-    const r = await fetch(url, { headers: HEADERS });
-    if (!r.ok) throw new Error(`u.gg ${r.status}`);
-    data = await r.json();
+    const [maj, min] = patch.split(".").map(Number);
+    let lastErr = null;
+    for (const pv of [`${maj}_${min}`, `${maj}_${min - 1}`]) { // nieuwe patch staat vaak nog niet op u.gg
+      const r = await fetch(`https://stats2.u.gg/lol/1.5/overview/${pv}/ranked_solo_5x5/${championId}/1.5.0.json`, { headers: HEADERS });
+      if (r.ok) { data = await r.json(); break; }
+      lastErr = new Error(`u.gg ${r.status} (${pv})`);
+    }
+    if (!data) throw lastErr || new Error("u.gg geen data");
     memo.set(key, { t: Date.now(), v: data });
   }
   const region = data["12"] || data[Object.keys(data)[0]];
