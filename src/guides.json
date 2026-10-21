@@ -211,5 +211,103 @@
         "Mercury's + Zhonya's; vraag jungle pre-6, ze heeft geen escape zonder dagger."
       ]
     }
+  },
+  "leesin": {
+    "algemeen": [
+      "Full clear is je standaard: start aan de kant waar je bot-lane staat (leash), eindig bij scuttle om 3:15-3:30.",
+      "Gank alleen lanes die gepusht zijn NAAR je toe of waar de tegenstander geen flash heeft; Lee's kracht is level 3-6, daar moet je winst halen.",
+      "Ward-jump (W op ward) is je escape en je engage: hou altijd 1 ward over in je inventory na 3:30.",
+      "Insec (R + ward-jump) alleen op een carry als je team erachter staat; anders gewoon R op de dichtstbijzijnde en Q terug.",
+      "Jij valt af na 25 min: forceer objectives (dragon/herald) vroeg en zet je team voor. Je bent geen late-game champ."
+    ],
+    "fallback": [
+      "Onbekende jungler: speel je eigen clear, ward hun raptors/wolves om 3:00 en gank waar de wave naar jou toe staat."
+    ],
+    "vs": {
+      "masteryi": [
+        "Invade zijn 2e buff level 3: hij is dood tegen jou vroeg. Vraag je laner mee.",
+        "Na 2 items stop je 1v1's; hij wint elke lange trade met Q-dodge.",
+        "Red Smite + Executioner's; jouw team moet CC hebben, jij alleen Q-slow.",
+        "Ward zijn clear, hij roamt niet, hij farmt tot 3 items."
+      ],
+      "udyr": [
+        "Niet 1v1 na level 6: zijn shield + heal wint. Pak de andere kant van de map.",
+        "Hij gankt met stun (Bear): ward voor je laners aan de kant waar hij start.",
+        "Steel objectives met Q-smite combo, hij heeft geen range.",
+        "Bramble Vest 2e item als hij Phoenix/Tiger-heal speelt."
+      ],
+      "warwick": [
+        "Pre-6 win jij met Q-Q burst als hij laag is; na 6 kan hij je fear-locken: vecht alleen met laner erbij.",
+        "Hij zoekt je als je <50% hp: back vroeg, geen low-hp farmen.",
+        "Executioner's vroeg tegen zijn heal."
+      ],
+      "viego": [
+        "Zijn clear is sneller: counter-jungle niet, gank sneller. Hij heeft geen escape zonder reset.",
+        "Vecht niet in de river als je laners niet dichtbij zijn; hij possesst en snowballt.",
+        "Ward zijn invade-pad om 2:45."
+      ]
+    }
+  },
+  "udyr": {
+    "algemeen": [
+      "Full clear elke keer, Bear (E) voor snelheid, Phoenix (R) voor clear: je bent een van de snelste clearers in het spel. Nooit ganken voor je clear af is, tenzij een gratis kill.",
+      "Gank met E (stun): loop door de bush, niet over de lane; je stun landt alleen bij contact.",
+      "Power: Heartsteel/Sunfire + boots, daarna tank-items. Jij bent de frontline, niet de damage.",
+      "Objectives: jij wint elke dragon-pit 1v1 na level 6; forceer dragons zodra je 6 bent.",
+      "Teamfights: ga naar de carry met E, zet R aan en blijf erop staan; laat je team de kill pakken."
+    ],
+    "fallback": [
+      "Clear, contest scuttle met E-stun, gank de lane die naar jou toe gepusht staat."
+    ],
+    "vs": {
+      "leesin": [
+        "Hij invadet level 3: begin aan de kant tegenover zijn start en pak scuttle met E-stun pas als je 4 bent.",
+        "Jij wint elke 1v1 na level 6; forceer dus dragon en herald, hij moet komen.",
+        "Ward zijn pad naar je laners, hij gankt vroeg en vaak."
+      ],
+      "masteryi": [
+        "Invade zijn 2e buff, hij heeft niets op level 2-3.",
+        "Na 2 items gaat hij jou niet aan, hij gaat je carry: sta bij je ADC met R aan.",
+        "Bramble/Thornmail 2e item: hij auto't je dood anders."
+      ],
+      "kayn": [
+        "Hij komt door muren: ward je eigen jungle, niet de river.",
+        "Red Kayn (Rhaast) wint lange trades; blue Kayn kun je stunnen uit zijn combo.",
+        "Contest alles vroeg: zijn vorm komt pas rond 10-12 min."
+      ]
+    }
+  },
+  "masteryi": {
+    "algemeen": [
+      "Farm tot 2 items (Kraken/BotRK + boots), dan pas vechten. Elke vroege gank zonder zeker kill verlies je tempo mee.",
+      "Alpha (Q) dodge je skillshots en ulti's mee: hou Q voor de belangrijkste spell (Malphite R, Lux Q), niet voor damage.",
+      "Teamfights: wacht buiten beeld tot de CC gebruikt is, dan R aan en de carry aanvallen. Nooit als eerste binnen.",
+      "Als hun team 3+ hard CC heeft: Mercury's + Guardian Angel, en vraag je team om te engagen voor jou.",
+      "Side-lane farmen met W-heal is je sterkste 'macro': je schaalt harder dan bijna iedereen in deze elo."
+    ],
+    "fallback": [
+      "Clear, farm, 2 items, dan pas vechten. Dodge de belangrijkste CC met Q."
+    ],
+    "vs": {
+      "leesin": [
+        "Hij invadet level 2-3: start aan de kant van je bot-lane en vecht NIET voor 6.",
+        "Ward je eigen buffs; hij komt je 2e buff pakken.",
+        "Na 2 items ben jij sterker 1v1, hij valt af."
+      ],
+      "udyr": [
+        "Niet 1v1 voor 3 items: zijn stun + Phoenix doodt je.",
+        "Pak de andere kant van de map, farm, en vecht alleen met je team.",
+        "Bramble/Thornmail gaat hij kopen: BotRK ipv Kraken tegen zijn hp."
+      ],
+      "warwick": [
+        "Zijn fear onderbreekt je R: Mercury's + Q-dodge op zijn R.",
+        "Hij wint vroeg, jij na 2 items; speel safe tot dan."
+      ],
+      "shaco": [
+        "Ward je eigen jungle; hij invadet level 2.",
+        "Zijn clone: de echte Shaco heeft geen oranje rand op de HUD-balk... kijk naar wie Q gebruikt.",
+        "Oracle Lens bij boxen in bush."
+      ]
+    }
   }
 }

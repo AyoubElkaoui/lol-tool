@@ -17,7 +17,7 @@ let win = null;
 
 const PROFILES = {
   ayoub: { name: "Ayoub", lane: "top", pool: ["irelia", "teemo", "jax"] },
-  danny: { name: "Danny", lane: "middle", pool: ["galio", "ziggs", "veigar"] },
+  danny: { name: "Danny", lane: "jungle", pool: ["leesin", "udyr", "masteryi"] },
 };
 
 const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
