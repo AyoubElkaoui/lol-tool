@@ -70,6 +70,8 @@ async function counters(opts) {
 
 // Welke patch-waarde heeft genoeg data? Direct na een nieuwe patch is de nieuwe
 // bijna leeg; dan nemen we de vorige of "30" (laatste 30 dagen).
+// De grens moet ook lage tiers halen: Bronze/Silver hebben ca. 4x minder games dan Gold+.
+const MIN_PATCH_GAMES = 15000;
 const patchMemo = new Map();
 async function resolvePatch(ddPatch, slug, lane, tier) {
   const key = `${ddPatch}|${tier}`;
@@ -81,12 +83,12 @@ async function resolvePatch(ddPatch, slug, lane, tier) {
     try {
       const d = await call(base("rune", { patch, slug, lane, tier }));
       const n = d?.summary?.runes?.pick?.n || 0;
-      if (n >= 50000) { best = { patch, n }; break; }
+      if (n >= MIN_PATCH_GAMES) { best = { patch, n }; break; }
       if (n > best.n) best = { patch, n };
     } catch { /* volgende */ }
   }
-  patchMemo.set(key, { t: Date.now(), v: best.patch });
-  return best.patch;
+  patchMemo.set(key, { t: Date.now(), v: best });
+  return best;
 }
 
 // Lane-verdeling van een champion (uit de rune-header): om de tegenstander in jouw lane te vinden.

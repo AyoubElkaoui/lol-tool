@@ -26,10 +26,17 @@ async function cached(name, loader) {
   return data;
 }
 
+// Elk uur opnieuw kijken: de app kan over een patch heen open blijven staan.
+const VERSION_TTL = 60 * 60 * 1000;
 async function version() {
-  if (mem.version) return mem.version;
-  const versions = await fetchJson(`${BASE}/api/versions.json`);
-  mem.version = versions[0];
+  if (mem.version && Date.now() - mem.versionAt < VERSION_TTL) return mem.version;
+  try {
+    const [latest] = await fetchJson(`${BASE}/api/versions.json`);
+    if (latest !== mem.version) mem = { version: latest, champions: null, items: null, runes: null, perkToStyle: null };
+  } catch (e) {
+    if (!mem.version) throw e; // offline: blijf op de bekende versie werken
+  }
+  mem.versionAt = Date.now();
   return mem.version;
 }
 

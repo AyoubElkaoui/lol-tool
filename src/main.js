@@ -11,6 +11,8 @@ const ugg = require("./ugg");
 const apply = require("./apply");
 const guide = require("./guide");
 const an = require("./analysis");
+const picks = require("./picks");
+const update = require("./update");
 
 const lcu = new LcuClient();
 let win = null;
@@ -21,17 +23,18 @@ const PROFILES = {
 };
 
 const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
-let settings = { profile: "ayoub", tier: "gold_plus", autoRunes: true, autoItems: true, autoSpells: false, autoAccept: false, alwaysOnTop: false, runeChoice: "pick" };
+let settings = { profile: "ayoub", tier: "gold_plus", autoRunes: true, autoItems: true, autoSpells: false, autoHover: true, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d" };
 function loadSettings() { try { settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsFile(), "utf8")) }; } catch { /* defaults */ } }
 function saveSettings() { fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2)); }
 
 const blank = () => ({
-  me: null, lane: null, enemy: null, enemies: [], team: null, bans: null, inBan: false,
+  me: null, lane: null, enemy: null, enemies: [], team: null, bans: null, inBan: false, picks: null, locked: false,
   runes: null, items: null, teamBuild: null, spells: null, skills: null, guide: null,
   applied: { runes: null, items: null, spells: null },
 });
-const state = { client: "zoeken", phase: "None", ...blank(), postgame: null, profiles: PROFILES, log: [] };
-let lastKey = "", lastBanKey = "", busy = false, acceptedId = null, eogShown = null;
+const state = { client: "zoeken", phase: "None", ...blank(), postgame: null, profiles: PROFILES, log: [], data: null, update: null, myStats: {} };
+let autoPickId = 0, autoBanId = 0, autoTried = "";
+let lastKey = "", lastBanKey = "", lastPickKey = "", busy = false, acceptedId = null, eogShown = null;
 
 function log(msg) { state.log = [`${new Date().toLocaleTimeString("nl-NL")}  ${msg}`, ...state.log].slice(0, 60); push(); }
 function push() { if (win && !win.isDestroyed()) win.webContents.send("state", { ...state, settings }); }
@@ -39,9 +42,42 @@ function push() { if (win && !win.isDestroyed()) win.webContents.send("state", {
 const LANE = { top: "top", jungle: "jungle", middle: "middle", bottom: "bottom", utility: "support" };
 const BOOTS = new Set([1001, 3005, 3006, 3009, 3010, 3020, 3047, 3111, 3117, 3158]);
 const isBoot = (id) => BOOTS.has(Number(id));
+const FLASH = 4;
+
+// Eerste spell zit op D, tweede op F: Flash komt op de toets die de speler gewend is.
+function orderSpells(ids) {
+  const at = ids.indexOf(FLASH);
+  const want = settings.flashKey === "f" ? 1 : 0;
+  return at < 0 || at === want ? ids : [...ids].reverse();
+}
 
 async function countersFor(slug, lane, patch) {
   try { return (await lol.counters({ patch, slug, lane, tier: settings.tier })).list; } catch { return []; }
+}
+
+// Gebande en gekozen champions.
+function takenIds(session) {
+  const taken = new Set();
+  for (const a of (session.actions || []).flat()) if (a.completed && a.championId > 0) taken.add(a.championId);
+  for (const p of [...(session.myTeam || []), ...(session.theirTeam || [])]) if (p.championId > 0) taken.add(p.championId);
+  return taken;
+}
+
+// Patch-keuze + wat de app laat zien over de versheid van de data.
+async function refreshData() {
+  const latest = await dd.lolalyticsPatch();
+  const { patch, n } = await lol.resolvePatch(latest, "irelia", "top", settings.tier);
+  state.data = { patch, latest, games: n, tier: settings.tier };
+  return patch;
+}
+
+async function refreshMyStats() {
+  try { state.myStats = picks.myStats(await lcu.get("/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=99")); push(); }
+  catch { /* geen historie: rijen tonen dan alleen de data */ }
+}
+
+async function checkUpdate() {
+  try { state.update = await update.check(app.getVersion()); push(); } catch { /* offline */ }
 }
 
 // ---------- ban-fase ----------
@@ -49,9 +85,7 @@ async function processBans(session, champs, patch) {
   const myCell = session.localPlayerCellId;
   const meRow = (session.myTeam || []).find((p) => p.cellId === myCell);
   const lane = LANE[meRow?.assignedPosition] || PROFILES[settings.profile].lane;
-  const taken = new Set();
-  for (const a of (session.actions || []).flat()) if (a.completed && a.championId > 0) taken.add(a.championId);
-  for (const p of [...(session.myTeam || []), ...(session.theirTeam || [])]) if (p.championId > 0) taken.add(p.championId);
+  const taken = takenIds(session);
   const hovers = (session.theirTeam || []).map((p) => p.championPickIntent || p.championId).filter((x) => x > 0);
   const key = `${lane}|${[...taken].sort().join(",")}|${hovers.join(",")}|${meRow?.championPickIntent || 0}`;
   if (key === lastBanKey) return;
@@ -69,18 +103,36 @@ async function processBans(session, champs, patch) {
 
 // ---------- pick-fase ----------
 async function resolveEnemyLaner(meSlug, lane, enemyIds, champs, patch) {
-  if (!enemyIds.length) return null;
-  const list = await countersFor(meSlug, lane, patch);
-  const rows = list.filter((r) => enemyIds.includes(r.cid));
-  const inLane = rows.filter((r) => r.defaultLane === lane).sort((a, b) => b.n - a.n);
-  if (inLane[0]) return { champ: champs[inLane[0].cid], row: inLane[0] };
-  // Niet in de counter-data (nieuwe champ, weinig games): kijk per tegenstander waar hij meestal speelt.
-  for (const id of enemyIds) {
-    const c = champs[id]; if (!c) continue;
-    const dl = await lol.defaultLane({ patch, slug: c.lolaSlug, lane, tier: settings.tier });
-    if (dl === lane) { const row = rows.find((r) => r.cid === id) || null; return { champ: c, row }; }
-  }
-  return null;
+  const champ = await picks.laneOpponent({ enemyIds, lane, champs, patch, tier: settings.tier });
+  if (!champ) return null;
+  const row = (await countersFor(meSlug, lane, patch)).find((r) => r.cid === champ.id) || null;
+  return { champ, row };
+}
+
+// Counter picks / blind pick: alleen zolang je nog niet gelockt hebt.
+async function processCounterPicks(session, champs, patch) {
+  const myCell = session.localPlayerCellId;
+  const meRow = (session.myTeam || []).find((p) => p.cellId === myCell);
+  if (!meRow) return;
+  const myPicks = (session.actions || []).flat().filter((a) => a.type === "pick" && a.actorCellId === myCell);
+  state.locked = myPicks.length ? myPicks.every((a) => a.completed) : meRow.championId > 0;
+  if (state.locked) return;
+  const myHoverId = meRow.championPickIntent || meRow.championId || 0;
+  const lane = LANE[meRow.assignedPosition] || PROFILES[settings.profile].lane;
+  const taken = takenIds(session);
+  taken.delete(myHoverId);
+  const enemyIds = (session.theirTeam || []).map((p) => p.championId || p.championPickIntent || 0).filter((x) => x > 0);
+  const pool = PROFILES[settings.profile].pool.map((slug) => Object.values(champs).find((c) => c.lolaSlug === slug)).filter(Boolean);
+  if (champs[myHoverId] && !pool.includes(champs[myHoverId])) pool.unshift(champs[myHoverId]);
+  const key = `${lane}|${patch}|${enemyIds.slice().sort().join(",")}|${[...taken].sort().join(",")}|${pool.map((c) => c.id).join(",")}`;
+  if (key === lastPickKey) return;
+  lastPickKey = key;
+  try {
+    const opts = { lane, champs, patch, tier: settings.tier };
+    const enemy = await picks.laneOpponent({ enemyIds, ...opts });
+    state.picks = await picks.advice({ enemy, pool, taken, ...opts });
+    push();
+  } catch (e) { lastPickKey = ""; log("Counter picks mislukt: " + e.message); }
 }
 
 // Startitems als u.gg niet bereikbaar is: op klasse.
@@ -113,7 +165,7 @@ async function processPick(session, champs, patch) {
     const laner = await resolveEnemyLaner(slug, lane, enemyIds, champs, patch);
     const enemyChanged = (laner?.champ?.id || null) !== (state.enemy?.id || null);
     state.enemy = laner?.champ || null;
-    if (laner && enemyChanged) log(`Tegenstander in lane: ${laner.champ.name} (${laner.row.vsWr}% wr)`);
+    if (laner && enemyChanged) log(`Tegenstander in lane: ${laner.champ.name}${laner.row ? ` (${laner.row.vsWr}% wr)` : ""}`);
     state.team = an.analyseTeam(state.enemies);
 
     const opts = { patch, slug, lane, tier: settings.tier };
@@ -134,9 +186,10 @@ async function processPick(session, champs, patch) {
       state.champUrl = urls.champion("");
       state.runes = { ...runes, perkInfo, shards: dd.SHARDS };
       state.ugg = u;
-      state.spells = u ? { ids: u.spells, names: u.spells.map((id) => ugg.SPELL_NAMES[id] || id), imgs: u.spells.map((id) => `${urls.champion("").replace("/champion/", "/spell/")}${ugg.SPELL_IMG[id] || ""}.png`) } : null;
       state.skills = u ? { order: u.skillOrder, priority: u.skillPriority } : null;
     }
+    const spellIds = u ? orderSpells(u.spells) : [];
+    state.spells = u ? { ids: spellIds, names: spellIds.map((id) => ugg.SPELL_NAMES[id] || id), imgs: spellIds.map((id) => `${urls.champion("").replace("/champion/", "/spell/")}${ugg.SPELL_IMG[id] || ""}.png`) } : null;
 
     // Matchup-laag: team-build, guide, situationele items (verandert als tegenstanders bijkomen).
     const tb = an.teamBuild({ me, core: items.core, situational: items.situational, options: u?.itemOptions, itemData, team: state.team, laner: state.enemy, defaultBoot: items.boot, isBoot });
@@ -146,7 +199,7 @@ async function processPick(session, champs, patch) {
     push();
 
     const title = `${me.name}${state.enemy ? " vs " + state.enemy.name : ""}`;
-    if (settings.autoRunes && (!sameChamp || !state.applied.runes)) {
+    if (settings.autoRunes && (!sameChamp || enemyChanged || !state.applied.runes)) {
       const page = runes.pages[settings.runeChoice === "win" && runes.pages[1] ? 1 : 0];
       try { await apply.applyRunes(lcu, page, title); state.applied.runes = title; log("Runes gezet: " + title); }
       catch (e) { log("Runes zetten mislukt: " + e.message); }
@@ -157,8 +210,8 @@ async function processPick(session, champs, patch) {
         state.applied.items = title; log("Item sets gezet: " + title + (state.teamBuild.changed ? " (+ vs team)" : ""));
       } catch (e) { log("Item set mislukt: " + e.message); }
     }
-    if (settings.autoSpells && u?.spells?.length === 2 && !state.applied.spells) {
-      try { await lcu.patch("/lol-champ-select/v1/session/my-selection", { spell1Id: u.spells[0], spell2Id: u.spells[1] }); state.applied.spells = state.spells.names.join(" + "); log("Spells gezet: " + state.applied.spells); }
+    if (settings.autoSpells && u?.spells?.length === 2 && (!sameChamp || !state.applied.spells)) {
+      try { await lcu.patch("/lol-champ-select/v1/session/my-selection", { spell1Id: spellIds[0], spell2Id: spellIds[1] }); state.applied.spells = state.spells.names.join(" + "); log("Spells gezet: " + state.applied.spells); }
       catch (e) { log("Spells zetten mislukt: " + e.message); }
     }
   } catch (e) {
@@ -166,16 +219,56 @@ async function processPick(session, champs, patch) {
   } finally { busy = false; push(); }
 }
 
+// ---------- automatisch hoveren ----------
+// Hoveren is een PATCH zonder completed: true. Locken of bannen bevestigen doet de speler altijd zelf.
+const myAction = (session, type) => (session.actions || []).flat().find((a) => a.type === type && a.actorCellId === session.localPlayerCellId && !a.completed);
+const hoverChamp = (action, championId) => lcu.patch(`/lol-champ-select/v1/session/actions/${action.id}`, { championId });
+
+async function tryHover(action, championId, label) {
+  const attempt = `${action.id}:${championId}`;
+  if (attempt === autoTried) return false; // niet elke tick opnieuw proberen als de client weigert
+  autoTried = attempt;
+  try { await hoverChamp(action, championId); log(label); return true; }
+  catch (e) { log(`Hoveren mislukt: ${e.message}`); return false; }
+}
+
+async function autoHoverPick(session, champs) {
+  if (!settings.autoHover || state.locked || !state.picks) return;
+  const action = myAction(session, "pick");
+  if (!action) return;
+  const meRow = (session.myTeam || []).find((p) => p.cellId === session.localPlayerCellId);
+  const current = action.championId || meRow?.championPickIntent || 0;
+  if (current && current !== autoPickId) return; // eigen keuze gaat altijd voor
+  const best = state.picks.pool.find((r) => !r.taken && r.wr != null);
+  if (!best || best.champ.id === current) return;
+  const why = state.picks.enemy ? `tegen ${state.picks.enemy.name}` : "blind pick";
+  if (await tryHover(action, best.champ.id, `Gehoverd: ${best.champ.name} (${why}, ${best.wr}%)`)) autoPickId = best.champ.id;
+}
+
+async function autoHoverBan(session) {
+  if (!settings.autoHover || !state.bans?.list?.length) return;
+  const action = myAction(session, "ban");
+  if (!action?.isInProgress) return;
+  if (action.championId && action.championId !== autoBanId) return; // eigen keuze gaat altijd voor
+  const allies = new Set((session.myTeam || []).map((p) => p.championPickIntent || p.championId).filter(Boolean));
+  const best = state.bans.list.find((x) => !allies.has(x.cid) && !state.bans.pool.includes(x.champ?.lolaSlug));
+  if (!best || best.cid === action.championId) return;
+  if (await tryHover(action, best.cid, `Ban gehoverd: ${best.champ.name}`)) autoBanId = best.cid;
+}
+
 async function processChampSelect(session) {
   const champs = await dd.champions();
   if (settings.tier === "all") settings.tier = "gold_plus";
-  const patch = await lol.resolvePatch(await dd.lolalyticsPatch(), "irelia", "top", settings.tier);
+  const patch = await refreshData();
   if (!state.champUrl) { const urls = await dd.imageUrls(); state.champUrl = urls.champion(""); }
   const actions = (session.actions || []).flat();
   const bansOpen = actions.some((a) => a.type === "ban" && !a.completed);
   const inBan = session.timer?.phase === "PLANNING" || (session.timer?.phase === "BAN_PICK" && bansOpen);
   if (inBan !== state.inBan) { state.inBan = inBan; push(); }
   if (inBan) await processBans(session, champs, patch);
+  await processCounterPicks(session, champs, patch);
+  await autoHoverBan(session);
+  await autoHoverPick(session, champs);
   await processPick(session, champs, patch);
 }
 
@@ -208,16 +301,16 @@ async function tick() {
   if (!lcu.connected) {
     const ok = await lcu.connect();
     state.client = ok ? "verbonden" : "zoeken";
-    if (ok) log("Verbonden met League-client");
+    if (ok) { log("Verbonden met League-client"); refreshMyStats(); }
     push();
     if (!ok) return;
   }
   const phase = await lcu.gameflowPhase();
-  if (phase === "None" && !(await lcu.connect())) { state.client = "zoeken"; lastKey = ""; lastBanKey = ""; push(); return; }
+  if (phase === "None" && !(await lcu.connect())) { state.client = "zoeken"; lastKey = ""; lastBanKey = ""; lastPickKey = ""; push(); return; }
   if (phase !== state.phase) {
     state.phase = phase;
-    if (phase === "ChampSelect") { Object.assign(state, blank()); state.postgame = null; lastKey = ""; lastBanKey = ""; }
-    if (phase === "Lobby" || phase === "Matchmaking") { lastKey = ""; lastBanKey = ""; }
+    if (phase === "ChampSelect") { Object.assign(state, blank()); state.postgame = null; autoPickId = 0; autoBanId = 0; autoTried = ""; refreshMyStats(); lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
+    if (phase === "Lobby" || phase === "Matchmaking") { lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
     push();
   }
   if (phase === "ReadyCheck" && settings.autoAccept) {
@@ -246,17 +339,28 @@ ipcMain.handle("get-state", () => ({ ...state, settings }));
 ipcMain.handle("set-settings", (_e, patch) => {
   settings = { ...settings, ...patch }; saveSettings();
   if ("alwaysOnTop" in patch && win) win.setAlwaysOnTop(!!settings.alwaysOnTop, "floating");
-  if ("tier" in patch || "profile" in patch || "runeChoice" in patch) { lastKey = ""; lastBanKey = ""; state.applied = { runes: null, items: null, spells: null }; }
+  if ("tier" in patch) refreshData().then(push).catch(() => {});
+  if ("tier" in patch || "profile" in patch || "runeChoice" in patch || "flashKey" in patch) { lastKey = ""; lastBanKey = ""; lastPickKey = ""; state.applied = { runes: null, items: null, spells: null }; }
   push(); return settings;
 });
-ipcMain.handle("reapply", async () => { lastKey = ""; lastBanKey = ""; state.applied = { runes: null, items: null, spells: null }; await tick(); return true; });
+ipcMain.handle("hover", async (_e, type, championId) => {
+  const session = await lcu.champSelect();
+  const action = session && myAction(session, type === "ban" ? "ban" : "pick");
+  if (!action || !Number.isInteger(championId)) return false;
+  try { await hoverChamp(action, championId); return true; }
+  catch (e) { log(`Hoveren mislukt: ${e.message}`); return false; }
+});
+ipcMain.handle("reapply", async () => { lastKey = ""; lastBanKey = ""; lastPickKey = ""; state.applied = { runes: null, items: null, spells: null }; await tick(); return true; });
 
 app.whenReady().then(async () => {
   dd.setCacheDir(path.join(app.getPath("userData"), "ddragon"));
   loadSettings();
   createWindow();
-  try { log("Data Dragon " + (await dd.version())); } catch (e) { log("Data Dragon niet bereikbaar: " + e.message); }
+  try { log("Data Dragon " + (await dd.version())); await refreshData(); push(); } catch (e) { log("Data niet bereikbaar: " + e.message); }
+  checkUpdate();
   setInterval(() => tick().catch((e) => log("tick: " + e.message)), 1500);
+  setInterval(() => refreshData().then(push).catch(() => {}), 60 * 60 * 1000);
+  setInterval(checkUpdate, 6 * 60 * 60 * 1000);
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 app.on("window-all-closed", () => { app.quit(); });

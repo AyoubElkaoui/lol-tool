@@ -30,6 +30,7 @@ function renderHero(s) {
       <div class="wrline">
         ${s.guide?.level ? `<span class="badge ${s.guide.level}">${s.guide.level}</span>` : ""}
         ${row ? `<span class="wr"><b>${row.vsWr}%</b> winrate in deze matchup · ${Number(row.n).toLocaleString("nl-NL")} games</span>` : ""}
+        ${record(s, s.me) ? `<span class="wr">Jij met ${esc(s.me.name)}: <b>${record(s, s.me)}</b> in je recente games</span>` : ""}
       </div>
       <div class="applied">
         ${chip(s.applied.runes, "Runes gezet", s.settings.autoRunes, "Runes: handmatig")}
@@ -46,8 +47,56 @@ function renderBans(s) {
   if (!show) return;
   const list = s.bans.list || [];
   b.innerHTML = `<h2>Ban-advies <small>${esc(LANE_NL[s.bans.lane] || s.bans.lane)} · jouw pool: ${s.bans.pool.join(", ")} · tier ${esc(s.settings.tier)}</small></h2>
-    <div class="banlist">${list.map((x, i) => `<div class="ban"><img src="${icon(s, x.champ)}" alt="" /><div><b>${i + 1}. ${esc(x.champ?.name)}</b><small>${esc(x.parts.join(" · "))}</small></div></div>`).join("") || "<span class='wr'>Geen data</span>"}</div>
+    <div class="banlist">${list.map((x, i) => `<div class="ban" data-hover="ban" data-champ="${x.cid}" title="Klik om ${esc(x.champ?.name)} als ban te hoveren"><img src="${icon(s, x.champ)}" alt="" /><div><b>${i + 1}. ${esc(x.champ?.name)}</b><small>${esc(x.parts.join(" · "))}</small></div></div>`).join("") || "<span class='wr'>Geen data</span>"}</div>
     ${s.bans.hovers?.length ? `<div class="hovers">Zij hoveren: ${s.bans.hovers.map((c) => `<img src="${icon(s, c)}" title="${esc(c.name)}" alt="" /> ${esc(c.name)}`).join(" ")}</div>` : ""}`;
+}
+
+const wrLevel = (wr) => (wr == null ? "" : wr >= 53 ? "GOED" : wr >= 50 ? "OK" : wr >= 47 ? "LASTIG" : "MOEILIJK");
+const pct = (x) => `${Number(x).toLocaleString("nl-NL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+const record = (s, c) => { const r = c && s.myStats?.[c.id]; return r ? `${r.wins}W ${r.games - r.wins}L` : ""; };
+
+function pickRow(s, r, top) {
+  const facts = r.taken ? ["al weg"] : r.wr == null ? ["te weinig data"] : [`${Number(r.n).toLocaleString("nl-NL")} games`];
+  const rec = record(s, r.champ);
+  if (rec) facts.push(`jij: ${rec}`);
+  const worst = r.worst?.length ? `<small class="worst">Zwak tegen ${r.worst.map((w) => `${esc(w.name)} ${pct(w.wr)}`).join(", ")}</small>` : "";
+  const hover = r.taken ? "" : `data-hover="pick" data-champ="${r.champ.id}" title="Klik om ${esc(r.champ.name)} te hoveren"`;
+  return `<div class="pick ${r.taken ? "gone" : ""} ${top ? "top" : ""}" ${hover}><img src="${icon(s, r.champ)}" alt="" />
+    <div class="pinfo"><b>${esc(r.champ.name)}${top ? `<span class="tag">Aanrader</span>` : ""}</b><small>${esc(facts.join(" · "))}</small>${worst}</div>
+    ${r.wr != null && !r.taken ? `<span class="pwr ${wrLevel(r.wr)}">${pct(r.wr)}</span>` : ""}</div>`;
+}
+
+function renderPicks(s) {
+  const el = $("#picks");
+  const p = s.picks;
+  const show = s.phase === "ChampSelect" && p && !s.locked;
+  el.classList.toggle("hidden", !show);
+  if (!show) return;
+  const topIdx = p.pool.findIndex((r) => !r.taken && r.wr != null);
+  const pool = p.pool.map((r, i) => pickRow(s, r, i === topIdx)).join("");
+  if (p.mode === "blind") {
+    el.innerHTML = `<h2>Blind pick <small>${esc(LANE_NL[p.lane] || p.lane)} · nog geen tegenstander · verwachte winrate over alle matchups</small></h2><div class="picklist">${pool}</div>`;
+    return;
+  }
+  el.innerHTML = `<h2>Counter picks <small>tegen ${esc(p.enemy.name)} · ${esc(LANE_NL[p.lane] || p.lane)} · jouw winrate in de matchup</small></h2>
+    <div class="pickcols"><div><div class="ilabel">Jouw pool</div><div class="picklist">${pool}</div></div>
+    <div><div class="ilabel">Beste in deze lane</div><div class="picklist">${p.best.map((r) => pickRow(s, r)).join("") || "<span class='wr'>Te weinig data</span>"}</div></div></div>`;
+}
+
+function renderData(s) {
+  const d = s.data;
+  const el = $("#datapill");
+  el.classList.toggle("hidden", !d);
+  if (d) {
+    const tier = { bronze: "Bronze", silver: "Silver", gold_plus: "Gold+", emerald_plus: "Emerald+" }[d.tier] || d.tier;
+    const fresh = d.patch === d.latest;
+    el.textContent = `${d.patch === "30" ? "Laatste 30 dagen" : "Patch " + d.patch} · ${tier}`;
+    el.classList.toggle("old", !fresh);
+    el.title = fresh ? "Nieuwste patch" : `Patch ${d.latest} heeft nog te weinig games in deze tier; de tool schakelt vanzelf over zodra er genoeg zijn.`;
+  }
+  const u = $("#update");
+  u.classList.toggle("hidden", !s.update);
+  if (s.update) { u.href = s.update.url; u.textContent = `Nieuwe versie ${s.update.version} beschikbaar: klik om te downloaden`; }
 }
 
 function renderTeam(s) {
@@ -139,17 +188,18 @@ function render(s) {
   const phase = { ChampSelect: "champ select", InProgress: "in game", Lobby: "lobby", Matchmaking: "zoeken naar game", ReadyCheck: "accepteren!", EndOfGame: "einde game", PreEndOfGame: "einde game", None: "" }[s.phase] ?? s.phase ?? "";
   st.querySelector(".txt").textContent = s.client === "verbonden" ? `Verbonden${phase ? " · " + phase : ""} · ${s.profiles?.[s.settings.profile]?.name || ""}` : "Client zoeken…";
   st.className = "status" + (s.client === "verbonden" ? " on" : "");
-  for (const id of ["profile", "tier", "runeChoice"]) $("#" + id).value = s.settings[id];
-  for (const id of ["autoRunes", "autoItems", "autoSpells", "autoAccept", "alwaysOnTop"]) $("#" + id).checked = !!s.settings[id];
-  renderHero(s); renderBans(s); renderPostgame(s);
+  for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).value = s.settings[id];
+  for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoAccept", "alwaysOnTop"]) $("#" + id).checked = !!s.settings[id];
+  renderData(s); renderHero(s); renderBans(s); renderPicks(s); renderPostgame(s);
   $("#content").classList.toggle("hidden", !s.me);
   renderTeam(s); renderRunes(s); renderItems(s); renderSpells(s); renderGuide(s);
   $("#log pre").textContent = (s.log || []).join("\n");
 }
 
-for (const id of ["profile", "tier", "runeChoice"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.value }));
-for (const id of ["autoRunes", "autoItems", "autoSpells", "autoAccept", "alwaysOnTop"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.checked }));
+for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.value }));
+for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoAccept", "alwaysOnTop"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.checked }));
 $("#reapply").addEventListener("click", () => api.reapply());
+document.addEventListener("click", (e) => { const el = e.target.closest("[data-hover]"); if (el) api.hover(el.dataset.hover, Number(el.dataset.champ)); });
 $("#toggleSettings").addEventListener("click", (e) => { e.stopPropagation(); $("#settings").classList.toggle("hidden"); });
 document.addEventListener("click", (e) => { if (!e.target.closest("#settings")) $("#settings").classList.add("hidden"); });
 

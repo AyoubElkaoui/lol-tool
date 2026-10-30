@@ -129,6 +129,28 @@ main { padding: 18px; max-width: 1140px; width: 100%; margin: 0 auto; display: g
 .ban small { color: var(--muted); font-size: 11px; }
 .hovers { margin-top: 10px; color: var(--muted); font-size: 13px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .hovers img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line2); }
+/* counter picks */
+.pickcols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .pickcols { grid-template-columns: 1fr; } }
+.picklist { display: grid; gap: 8px; }
+.pick { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border: 1px solid var(--line2); border-radius: 10px; background: rgba(1,10,19,.4); }
+.pick img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold-dim); flex: none; }
+.pick.top { border-color: var(--gold-dim); box-shadow: inset 0 0 0 1px rgba(200,170,110,.25); }
+.pick.gone { opacity: .45; }
+.pick[data-hover], .ban[data-hover] { cursor: pointer; }
+.pick[data-hover]:hover, .ban[data-hover]:hover { border-color: var(--gold); }
+.pinfo { min-width: 0; flex: 1; }
+.pinfo b { display: flex; align-items: center; gap: 8px; }
+.pinfo small { display: block; color: var(--muted); font-size: 11px; }
+.pinfo small.worst { color: var(--warn); }
+.tag { font-size: 10px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--gold); }
+.pwr { font-size: 16px; font-weight: 800; }
+.pwr.GOED { color: var(--good); } .pwr.OK { color: var(--ok); } .pwr.LASTIG { color: var(--warn); } .pwr.MOEILIJK { color: var(--bad); }
+/* data & update */
+.datapill { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(10,200,185,.35); color: var(--blue); white-space: nowrap; }
+.datapill.old { color: var(--warn); border-color: rgba(245,185,66,.4); }
+.updatebar { display: block; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--gold-dim); background: rgba(200,170,110,.1); color: var(--gold2); font-weight: 600; text-decoration: none; }
+.updatebar:hover { border-color: var(--gold); }
 /* team */
 .teamrow { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }

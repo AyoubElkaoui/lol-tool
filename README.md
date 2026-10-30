@@ -14,6 +14,11 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 ## Wat de tool doet
 - **Ban-fase:** top-5 bans voor jouw pool in jouw lane (waar je pool het slechtst tegen scoort) + wat de tegenstanders hoveren.
 - **Pick-fase (hoveren is genoeg):** runes (page "LoLTool …" actief), summoner spells, twee item sets ("standaard" en "vs team"), skill order, matchup-guide met winrate-badge.
+- **Counter picks (tot je lockt):** zodra de tegenstander in jouw lane bekend is: jouw pool op winrate tegen hem en de 5 beste champs in die lane. Nog geen tegenstander: de veiligste blind pick uit je pool, met de matchups om voor op te passen. Bezette champs tellen niet mee.
+- **Automatisch hoveren (standaard aan):** op jouw ban-beurt hovert de tool de beste ban, in de pick-fase de beste champ uit je pool. Wordt de tegenstander bekend of verandert hij, dan schakelt de tool om en gaan runes en items mee. Klikken op een pick of ban in de tool hovert die ook. Locken doe je altijd zelf en een eigen keuze wordt nooit overschreven.
+- **Jouw record:** winst/verlies per champion uit je eigen recente games, bij de picks en bovenin.
+- **Data-status:** bovenin staat van welke patch en tier de data is. De tool pakt de nieuwste patch zodra daar genoeg games op staan, ook als de app open blijft staan.
+- **Update-melding:** staat er een nieuwe versie op GitHub, dan verschijnt bovenin een downloadlink.
 - **Hun team:** AD/AP/tank/healer-telling, boots-keuze met reden, defensief item als het nodig is, anti-heal-advies. Werkt live bij als tegenstanders bijkomen.
 - **Na de game:** KDA, CS/min, vision en 1-2 concrete werkpunten.
 - **Instellingen:** profiel (Ayoub top / Danny mid), tier, rune-keuze, auto runes/items/spells, ready check auto-accepteren, venster altijd bovenaan.
@@ -28,6 +33,7 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 ## Instellingen (bovenin)
 - **Tier**: welke elo-data (Bronze, Silver, Gold+, Emerald+). Gold+ = beste balans tussen "werkt in lage elo" en genoeg games.
 - **Runes**: meest gespeelde page of hoogste winrate.
+- **Flash op**: D of F. Bepaalt de volgorde waarin spells in de client worden gezet (de schakelaar "Summoner spells automatisch zetten" moet aan staan).
 - Automatisch aan/uit voor runes en items; **Opnieuw** forceert een nieuwe ophaalronde.
 
 ## Ontwikkelen
@@ -35,12 +41,13 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 npm install
 npm start                      # app starten
 npm run test:data irelia top jax   # data-laag testen zonder client
+node scripts/test-picks.mjs top silver irelia,teemo,jax jax,leesin,zed,jinx,leona   # counter picks; zonder vijf-lijst blind pick
 npm run dist:win               # installer bouwen (op Windows)
 ```
 Mac-installers worden door GitHub Actions gebouwd: tag pushen (`git tag v0.1.0 && git push --tags`) → release met .exe en .dmg.
 
 ## Mock-modus (ontwerpen zonder League)
-`python -m http.server 5178 --directory src/renderer` en open `http://localhost:5178/index.html?mock=1` (pick), `?mock=ban` (ban-fase + vorige game) of `?mock=idle`.
+`python -m http.server 5178 --directory src/renderer` en open `http://localhost:5178/index.html?mock=1` (pick), `?mock=ban` (ban-fase + vorige game), `?mock=counter`, `?mock=blind` of `?mock=idle`. Voeg `&update=1` toe voor de update-melding.
 
 ## Guides aanvullen
 `src/guides.json`: per champion-slug `algemeen` (altijd), `fallback` (onbekende tegenstander) en `vs.<tegenstander-slug>` (specifiek). Slugs zijn lowercase zonder spaties (`drmundo`, `wukong`, `ksante`).

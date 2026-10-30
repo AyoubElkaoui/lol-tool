@@ -11,6 +11,7 @@
     <header class="topbar">
       <div class="brand"><span class="gem"></span> LoL Tool</div>
       <div id="status" class="status"><span class="dot"></span><span class="txt">Client zoeken…</span></div>
+      <span id="datapill" class="datapill hidden"></span>
       <div class="actions">
         <button id="reapply" class="btn ghost" title="Opnieuw ophalen en zetten">↻ Opnieuw</button>
         <button id="toggleSettings" class="btn ghost" title="Instellingen">⚙</button>
@@ -39,15 +40,23 @@
           <option value="win">Hoogste winrate</option>
         </select>
       </label>
+      <label class="field"><span>Flash op</span>
+        <select id="flashKey">
+          <option value="d">D</option>
+          <option value="f">F</option>
+        </select>
+      </label>
       <label class="switch"><input type="checkbox" id="autoRunes" /><span>Runes automatisch zetten</span></label>
       <label class="switch"><input type="checkbox" id="autoItems" /><span>Item sets automatisch zetten</span></label>
       <label class="switch"><input type="checkbox" id="autoSpells" /><span>Summoner spells automatisch zetten</span></label>
+      <label class="switch"><input type="checkbox" id="autoHover" /><span>Beste ban en pick automatisch hoveren</span></label>
       <label class="switch"><input type="checkbox" id="autoAccept" /><span>Ready check automatisch accepteren</span></label>
       <label class="switch"><input type="checkbox" id="alwaysOnTop" /><span>Venster altijd bovenaan</span></label>
-      <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen pages en sets blijven staan.</p>
+      <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen sets blijven staan. Locken doe je altijd zelf; kies je iets anders, dan blijft de tool daarvan af.</p>
     </aside>
 
     <main id="main">
+      <a id="update" class="updatebar hidden" target="_blank" rel="noreferrer"></a>
       <section id="hero" class="hero idle">
         <div class="hero-inner">
           <div class="idle-art"></div>
@@ -62,6 +71,7 @@
       </section>
 
       <section id="bans" class="card hidden"></section>
+      <section id="picks" class="card hidden"></section>
       <section id="postgame" class="card hidden"></section>
 
       <div id="content" class="content hidden">
