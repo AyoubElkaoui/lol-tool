@@ -21,7 +21,7 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 - **Update-melding:** staat er een nieuwe versie op GitHub, dan verschijnt bovenin een downloadlink.
 - **Hun team:** AD/AP/tank/healer-telling, boots-keuze met reden, defensief item als het nodig is, anti-heal-advies. Werkt live bij als tegenstanders bijkomen.
 - **Na de game:** KDA, CS/min, vision en 1-2 concrete werkpunten.
-- **Instellingen:** profiel (Ayoub top / Danny mid), tier, rune-keuze, auto runes/items/spells, ready check auto-accepteren, venster altijd bovenaan.
+- **Instellingen:** profiel (Ayoub top + mid / Danny jungle; de pool volgt de lane die je krijgt), tier, rune-keuze, auto runes/items/spells, ready check auto-accepteren, venster altijd bovenaan.
 
 ## Hoe het werkt
 - Leest de League-client via de lokale LCU-API (lockfile), niets wordt in de Riot-mappen geschreven.

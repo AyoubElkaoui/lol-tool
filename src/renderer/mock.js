@@ -19,7 +19,7 @@
     perk(9111, "Triumph", "perk-images/Styles/Precision/Triumph.png", 8000),
     perk(9104, "Legend: Alacrity", "perk-images/Styles/Precision/LegendAlacrity/LegendAlacrity.png", 8000),
     perk(8299, "Last Stand", "perk-images/Styles/Sorcery/LastStand/LastStand.png", 8000),
-    perk(8313, "Triple Tonic", "perk-images/Styles/Inspiration/TripleTonic/TripleTonic.png", 8300),
+    perk(8313, "Triple Tonic", "perk-images/Styles/Inspiration/PerfectTiming/AlchemistCabinet.png", 8300),
     perk(8316, "Jack Of All Trades", "perk-images/Styles/Inspiration/JackOfAllTrades/JackofAllTrades2.png", 8300),
   ]);
   const full = {

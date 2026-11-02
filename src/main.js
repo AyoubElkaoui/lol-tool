@@ -18,9 +18,12 @@ const lcu = new LcuClient();
 let win = null;
 
 const PROFILES = {
-  ayoub: { name: "Ayoub", lane: "top", pool: ["irelia", "teemo", "jax"] },
+  ayoub: { name: "Ayoub", lane: "top", pool: ["irelia", "teemo", "jax"], pools: { middle: ["irelia", "ekko"] } },
   danny: { name: "Danny", lane: "jungle", pool: ["fiddlesticks", "nocturne", "leesin", "udyr", "masteryi"] },
 };
+
+// Pool voor de lane die je in champ select krijgt; anders de standaard-pool van het profiel.
+const poolFor = (lane) => { const p = PROFILES[settings.profile]; return p.pools?.[lane] || p.pool; };
 
 const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
 let settings = { profile: "ayoub", tier: "gold_plus", autoRunes: true, autoItems: true, autoSpells: false, autoHover: true, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d" };
@@ -90,7 +93,7 @@ async function processBans(session, champs, patch) {
   const key = `${lane}|${[...taken].sort().join(",")}|${hovers.join(",")}|${meRow?.championPickIntent || 0}`;
   if (key === lastBanKey) return;
   lastBanKey = key;
-  const pool = [...PROFILES[settings.profile].pool];
+  const pool = [...poolFor(lane)];
   // Hover je een champ buiten je pool, dan telt die mee (zodat het ook werkt als je iets anders speelt).
   const myHover = champs[meRow?.championPickIntent || meRow?.championId || 0];
   if (myHover && !pool.includes(myHover.lolaSlug)) pool.unshift(myHover.lolaSlug);
@@ -122,7 +125,7 @@ async function processCounterPicks(session, champs, patch) {
   const taken = takenIds(session);
   taken.delete(myHoverId);
   const enemyIds = (session.theirTeam || []).map((p) => p.championId || p.championPickIntent || 0).filter((x) => x > 0);
-  const pool = PROFILES[settings.profile].pool.map((slug) => Object.values(champs).find((c) => c.lolaSlug === slug)).filter(Boolean);
+  const pool = poolFor(lane).map((slug) => Object.values(champs).find((c) => c.lolaSlug === slug)).filter(Boolean);
   if (champs[myHoverId] && !pool.includes(champs[myHoverId])) pool.unshift(champs[myHoverId]);
   const key = `${lane}|${patch}|${enemyIds.slice().sort().join(",")}|${[...taken].sort().join(",")}|${pool.map((c) => c.id).join(",")}`;
   if (key === lastPickKey) return;
