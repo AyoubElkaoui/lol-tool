@@ -20,6 +20,9 @@
     perk(9104, "Legend: Alacrity", "perk-images/Styles/Precision/LegendAlacrity/LegendAlacrity.png", 8000),
     perk(8299, "Last Stand", "perk-images/Styles/Sorcery/LastStand/LastStand.png", 8000),
     perk(8313, "Triple Tonic", "perk-images/Styles/Inspiration/PerfectTiming/AlchemistCabinet.png", 8300),
+    perk(8400, "Resolve", "perk-images/Styles/7204_Resolve.png"),
+    perk(8473, "Bone Plating", "perk-images/Styles/Resolve/BonePlating/BonePlating.png", 8400),
+    perk(8242, "Unflinching", "perk-images/Styles/Resolve/Unflinching/Unflinching.png", 8400),
     perk(8316, "Jack Of All Trades", "perk-images/Styles/Inspiration/JackOfAllTrades/JackofAllTrades2.png", 8300),
   ]);
   const full = {
@@ -35,6 +38,7 @@
     skills: { order: ["Q","E","W","Q","Q","R","Q","W","Q","W","W","R","W","E","E","E","R","E"], priority: "QWE" },
     bans: null, postgame: null,
     runes: { pages: [
+      { label: "Tegen Jax", vs: true, wr: 46.6, n: 11182, pri: [8010, 9111, 9104, 8299], sec: [8473, 8242], mod: [5005, 5008, 5011] },
       { label: "Meest gespeeld", wr: 50.8, n: 272718, pri: [8010, 9111, 9104, 8299], sec: [8313, 8316], mod: [5005, 5008, 5011] },
       { label: "Hoogste winrate", wr: 52.1, n: 38012, pri: [8010, 9111, 9104, 8299], sec: [8316, 8313], mod: [5005, 5008, 5001] },
       { label: "Vs dit team", note: "Tenacity: 3x CC", wr: null, n: null, team: true, pri: [8010, 9111, 9104, 8299], sec: [8313, 8316], mod: [5005, 5008, 5013] },

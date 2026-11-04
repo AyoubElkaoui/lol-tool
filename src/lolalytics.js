@@ -65,6 +65,37 @@ async function itemBuild(opts, isBoot) {
   return { starters, boot, core: ordered, situational, builds: full.slice(0, 8) };
 }
 
+// Runes tegen één tegenstander. De JSON-endpoint negeert vs=, maar de vs-pagina van de site
+// heeft ze wel: die rendert de data als Qwik-state (<script type="qwik/json">), met
+// verwijzingen in base36 naar andere objecten. We zoeken de rune-sets {wr, n, page, set}.
+const vsMemo = new Map();
+async function vsRunePages({ patch, slug, lane, tier, vs, vslane }) {
+  const url = `https://lolalytics.com/lol/${slug}/vs/${vs}/build/?lane=${lane}&vslane=${vslane || lane}&tier=${tier}&patch=${patch}`;
+  const hit = vsMemo.get(url);
+  if (hit && Date.now() - hit.t < TTL) return hit.v;
+  const r = await fetch(url, { headers: { "User-Agent": HEADERS["User-Agent"] } });
+  if (!r.ok) throw new Error(`lolalytics vs ${r.status}`);
+  const html = await r.text();
+  const m = html.match(/<script type="qwik\/json">([\s\S]*?)<\/script>/);
+  if (!m) throw new Error("lolalytics vs: geen data in pagina");
+  const objs = JSON.parse(m[1]).objs || [];
+  const ref = (v) => (typeof v === "string" && /^[0-9a-z]+$/.test(v) && parseInt(v, 36) < objs.length ? objs[parseInt(v, 36)] : v);
+  const nums = (v) => { const a = ref(v); return Array.isArray(a) ? a.map(ref).map(Number).filter(Number.isFinite) : []; };
+  const sets = [];
+  for (const o of objs) {
+    if (!o || typeof o !== "object" || Array.isArray(o) || !("set" in o && "wr" in o && "n" in o && "page" in o)) continue;
+    const set = ref(o.set);
+    if (!set || typeof set !== "object") continue;
+    const page = { wr: Number(ref(o.wr)), n: Number(ref(o.n)), pri: nums(set.pri), sec: nums(set.sec), mod: nums(set.mod) };
+    if (page.pri.length === 4 && page.sec.length === 2 && page.mod.length === 3 && Number.isFinite(page.n)) sets.push(page);
+  }
+  if (!sets.length) throw new Error("lolalytics vs: geen rune-data");
+  // Eerste set = meest gespeeld, tweede = hoogste winrate (zelfde volgorde als ep=rune).
+  const v = sets.slice(0, 2);
+  vsMemo.set(url, { t: Date.now(), v });
+  return v;
+}
+
 async function counters(opts) {
   const d = await call(base("counter", opts));
   return { stats: d?.stats || null, list: Array.isArray(d?.counters) ? d.counters : [] };
@@ -98,4 +129,4 @@ async function defaultLane(opts) {
   try { const d = await call(base("rune", opts)); return d?.header?.defaultLane || null; } catch { return null; }
 }
 
-module.exports = { runePages, itemBuild, counters, resolvePatch, defaultLane };
+module.exports = { vsRunePages, runePages, itemBuild, counters, resolvePatch, defaultLane };

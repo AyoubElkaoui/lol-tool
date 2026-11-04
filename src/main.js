@@ -39,8 +39,16 @@ const blank = () => ({
 const state = { client: "zoeken", phase: "None", ...blank(), postgame: null, profiles: PROFILES, log: [], data: null, update: null, myStats: {} };
 let autoPickId = 0, autoBanId = 0, autoTried = "";
 // Handmatige keuze in de app (klik op een rune page of build); null = standaard uit de instellingen.
-let runeIdx = null, buildIdx = null, baseItems = null;
-const activeRuneIdx = (pages) => (runeIdx != null && pages[runeIdx] ? runeIdx : settings.runeChoice === "win" && pages[1] ? 1 : 0);
+// runeKey = label van de gekozen page, zodat de keuze blijft staan als de lijst verandert.
+let runeKey = null, buildIdx = null, baseItems = null, baseRunes = null;
+const activeRuneIdx = (pages) => {
+  const chosen = runeKey ? pages.findIndex((p) => p.label === runeKey) : -1;
+  if (chosen >= 0) return chosen;
+  const vs = pages.findIndex((p) => p.vs); // runes tegen je tegenstander gaan voor
+  if (vs >= 0) return settings.runeChoice === "win" && pages[vs + 1]?.vs ? vs + 1 : vs;
+  return settings.runeChoice === "win" && pages[1] ? 1 : 0;
+};
+const MIN_VS_RUNE_GAMES = 200;
 let lastKey = "", lastBanKey = "", lastPickKey = "", busy = false, acceptedId = null, eogShown = null;
 
 function log(msg) { state.log = [`${new Date().toLocaleTimeString("nl-NL")}  ${msg}`, ...state.log].slice(0, 60); push(); }
@@ -206,9 +214,9 @@ async function processPick(session, champs, patch) {
     const itemGold = Object.fromEntries(Object.values(itemData).map((i) => [i.id, i.gold]));
     const urls = await dd.imageUrls();
 
-    let runes = state.runes, items = baseItems, u = state.ugg;
+    let runes = baseRunes, items = baseItems, u = state.ugg;
     if (!sameChamp || !runes || !items) {
-      runeIdx = null; buildIdx = null;
+      runeKey = null; buildIdx = null;
       runes = await lol.runePages(opts);
       items = await lol.itemBuild(opts, isBoot);
       baseItems = items;
@@ -217,18 +225,30 @@ async function processPick(session, champs, patch) {
       items.starters = u?.starters?.length ? u.starters : fallbackStarters(me, lane);
       const up = await uggPage(u).catch(() => null);
       if (up && !runes.pages.some((p) => samePage(p, up))) runes.pages.push(up);
-      const perkInfo = {};
-      for (const p of runes.pages) for (const id of [...p.pri, ...p.sec]) { perkInfo[id] = await dd.perkInfo(id); if (perkInfo[id]) perkInfo[perkInfo[id].style] = await dd.perkInfo(perkInfo[id].style); }
+      baseRunes = runes;
       state.champUrl = urls.champion("");
-      state.runes = { ...runes, perkInfo, shards: dd.SHARDS };
       state.ugg = u;
       state.skills = u ? { order: u.skillOrder, priority: u.skillPriority } : null;
     }
+    // Runes tegen de tegenstander in jouw lane (bij Danny: de vijandelijke jungler) bovenaan.
+    let pages = [...runes.pages];
+    if (state.enemy) {
+      try {
+        const vsPages = (await lol.vsRunePages({ ...opts, vs: state.enemy.lolaSlug }))
+          .filter((p) => p.n >= MIN_VS_RUNE_GAMES)
+          .map((p, i) => ({ ...p, vs: true, label: `Tegen ${state.enemy.name}${i ? " · hoogste winrate" : ""}` }))
+          .filter((p, i, a) => !i || !samePage(p, a[0]));
+        pages = [...vsPages, ...pages.filter((p) => !vsPages.some((v) => samePage(v, p)))];
+        if (vsPages.length && enemyChanged) log(`Runes tegen ${state.enemy.name}: ${vsPages[0].n} games`);
+      } catch (e) { if (enemyChanged) log(`Runes tegen ${state.enemy.name} niet beschikbaar: ${e.message}`); }
+    }
     // Team-variant opnieuw bepalen als tegenstanders bijkomen.
-    runes = { ...runes, pages: runes.pages.filter((p) => !p.team) };
-    const tp = teamPage(runes.pages[0], state.team);
-    if (tp && !runes.pages.some((p) => samePage(p, tp))) runes.pages.push(tp);
-    state.runes = { ...state.runes, pages: runes.pages };
+    const tp = teamPage(pages[0], state.team);
+    if (tp && !pages.some((p) => samePage(p, tp))) pages.push(tp);
+    runes = { ...runes, pages };
+    const perkInfo = {};
+    for (const p of pages) for (const id of [...p.pri, ...p.sec]) { perkInfo[id] ||= await dd.perkInfo(id); if (perkInfo[id]) perkInfo[perkInfo[id].style] ||= await dd.perkInfo(perkInfo[id].style); }
+    state.runes = { ...runes, perkInfo, shards: dd.SHARDS };
     const spellIds = u ? orderSpells(u.spells) : [];
     state.spells = u ? { ids: spellIds, names: spellIds.map((id) => ugg.SPELL_NAMES[id] || id), imgs: spellIds.map((id) => `${urls.champion("").replace("/champion/", "/spell/")}${ugg.SPELL_IMG[id] || ""}.png`) } : null;
 
@@ -358,7 +378,7 @@ async function tick() {
   if (phase === "None" && !(await lcu.connect())) { state.client = "zoeken"; lastKey = ""; lastBanKey = ""; lastPickKey = ""; push(); return; }
   if (phase !== state.phase) {
     state.phase = phase;
-    if (phase === "ChampSelect") { Object.assign(state, blank()); runeIdx = null; buildIdx = null; baseItems = null; state.postgame = null; autoPickId = 0; autoBanId = 0; autoTried = ""; refreshMyStats(); lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
+    if (phase === "ChampSelect") { Object.assign(state, blank()); runeKey = null; buildIdx = null; baseItems = null; baseRunes = null; state.postgame = null; autoPickId = 0; autoBanId = 0; autoTried = ""; refreshMyStats(); lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
     if (phase === "Lobby" || phase === "Matchmaking") { lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
     push();
   }
@@ -403,7 +423,7 @@ ipcMain.handle("hover", async (_e, type, championId) => {
 ipcMain.handle("choose-runes", async (_e, idx) => {
   const pages = state.runes?.pages;
   if (!state.me || !pages?.[idx]) return false;
-  runeIdx = idx; state.runeIdx = idx;
+  runeKey = pages[idx].label; state.runeIdx = idx;
   const title = `${state.me.name}${state.enemy ? " vs " + state.enemy.name : ""}`;
   try { await apply.applyRunes(lcu, pages[idx], title); state.applied.runes = title; log(`Runes gezet: ${pages[idx].label}`); }
   catch (e) { log("Runes zetten mislukt: " + e.message); }

@@ -130,7 +130,7 @@ function renderRunes(s) {
   const many = s.runes.pages.length > 1;
   r.innerHTML = `<h2>Runes <small>in de client als “LoLTool …”${many ? " · klik om te wisselen" : ""}</small></h2>` + s.runes.pages.map((p, i) => `
     <div class="runepage ${i === activeIdx ? "active" : many ? "choosable" : ""}" ${i !== activeIdx ? `data-rune="${i}" title="Klik om deze page in de client te zetten"` : ""}>
-      <div class="ph"><b>${esc(p.label)}${i === activeIdx ? " · actief" : many ? " · klik om te kiezen" : ""}</b><span>${p.team ? esc(p.note || "aangepast op hun team") : p.wr != null ? `${p.wr}% · ${Number(p.n).toLocaleString("nl-NL")} games` : ""}</span></div>
+      <div class="ph"><b>${p.vs ? `<span class="tag">matchup</span> ` : ""}${esc(p.label)}${i === activeIdx ? " · actief" : many ? " · klik om te kiezen" : ""}</b><span>${p.team ? esc(p.note || "aangepast op hun team") : p.wr != null ? `${p.wr}% · ${Number(p.n).toLocaleString("nl-NL")} games` : ""}</span></div>
       <div class="trees">
         <div class="tree"><div class="tname">${treeName(p.pri[0])}</div><div class="perks">${perk(p.pri[0], true)}${p.pri.slice(1).map((id) => perk(id)).join("")}</div></div>
         <div class="tree"><div class="tname">${treeName(p.sec[0])}</div><div class="perks">${p.sec.map((id) => perk(id)).join("")}</div></div>
