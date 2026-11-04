@@ -143,6 +143,30 @@ async function processCounterPicks(session, champs, patch) {
   } catch (e) { lastPickKey = ""; log("Counter picks mislukt: " + e.message); }
 }
 
+const samePage = (a, b) => JSON.stringify([a.pri, a.sec, a.mod]) === JSON.stringify([b.pri, b.sec, b.mod]);
+
+// u.gg geeft één page (perks door elkaar): sorteren op tree en slot zoals de client het wil.
+async function uggPage(u) {
+  const r = u?.runes;
+  if (!r?.perks?.length || u.shards?.length !== 3) return null;
+  const pri = [], sec = [];
+  for (const id of r.perks) ((await dd.perkStyle(id)) === r.pri ? pri : sec).push(id);
+  const bySlot = async (ids) => { const s = await Promise.all(ids.map((id) => dd.perkSlot(id))); return ids.map((id, i) => [id, s[i]]).sort((a, b) => a[1] - b[1]).map(([id]) => id); };
+  if (pri.length !== 4 || sec.length !== 2) return null;
+  const games = u.games || 0;
+  return { label: "u.gg aanbevolen", wr: games ? Math.round((u.wins / games) * 1000) / 10 : null, n: games, pri: await bySlot(pri), sec: await bySlot(sec), mod: u.shards };
+}
+
+// Variant van de beste page op dit team: veel CC → Tenacity, veel burst → Health als laatste shard.
+function teamPage(page, team) {
+  if (!page || !team || team.count < 3) return null;
+  const mod = [...page.mod];
+  let why = null;
+  if (team.cc.length >= 3 && mod[2] !== 5013) { mod[2] = 5013; why = `Tenacity: ${team.cc.length}x CC`; }
+  else if ((team.assassins?.length || 0) >= 2 && mod[2] !== 5011) { mod[2] = 5011; why = "Health: veel burst"; }
+  return why ? { ...page, mod, label: "Vs dit team", note: why, wr: null, n: null, team: true } : null;
+}
+
 // Startitems als u.gg niet bereikbaar is: op klasse.
 function fallbackStarters(me, lane) {
   if (lane === "jungle") return [1101, 2003]; // jungle pet + pot
@@ -191,6 +215,8 @@ async function processPick(session, champs, patch) {
       try { u = await ugg.overview({ patch: await dd.lolalyticsPatch(), championId: me.id, lane, tier: settings.tier }); }
       catch (e) { u = null; log("u.gg (spells/skills) niet beschikbaar: " + e.message); }
       items.starters = u?.starters?.length ? u.starters : fallbackStarters(me, lane);
+      const up = await uggPage(u).catch(() => null);
+      if (up && !runes.pages.some((p) => samePage(p, up))) runes.pages.push(up);
       const perkInfo = {};
       for (const p of runes.pages) for (const id of [...p.pri, ...p.sec]) { perkInfo[id] = await dd.perkInfo(id); if (perkInfo[id]) perkInfo[perkInfo[id].style] = await dd.perkInfo(perkInfo[id].style); }
       state.champUrl = urls.champion("");
@@ -198,6 +224,11 @@ async function processPick(session, champs, patch) {
       state.ugg = u;
       state.skills = u ? { order: u.skillOrder, priority: u.skillPriority } : null;
     }
+    // Team-variant opnieuw bepalen als tegenstanders bijkomen.
+    runes = { ...runes, pages: runes.pages.filter((p) => !p.team) };
+    const tp = teamPage(runes.pages[0], state.team);
+    if (tp && !runes.pages.some((p) => samePage(p, tp))) runes.pages.push(tp);
+    state.runes = { ...state.runes, pages: runes.pages };
     const spellIds = u ? orderSpells(u.spells) : [];
     state.spells = u ? { ids: spellIds, names: spellIds.map((id) => ugg.SPELL_NAMES[id] || id), imgs: spellIds.map((id) => `${urls.champion("").replace("/champion/", "/spell/")}${ugg.SPELL_IMG[id] || ""}.png`) } : null;
 

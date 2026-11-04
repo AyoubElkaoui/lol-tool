@@ -92,10 +92,12 @@ async function runes() {
   mem.runes = data;
   mem.perkToStyle = {};
   mem.perkInfo = {};
+  mem.perkSlot = {};
   for (const style of data) {
     mem.perkInfo[style.id] = { name: style.name, icon: style.icon };
-    for (const slot of style.slots) for (const p of slot.runes) {
+    for (const [si, slot] of style.slots.entries()) for (const p of slot.runes) {
       mem.perkToStyle[p.id] = style.id;
+      mem.perkSlot[p.id] = si;
       mem.perkInfo[p.id] = { name: p.name, icon: p.icon, style: style.id };
     }
   }
@@ -103,6 +105,7 @@ async function runes() {
 }
 
 async function perkStyle(perkId) { await runes(); return mem.perkToStyle[perkId] ?? null; }
+async function perkSlot(perkId) { await runes(); return mem.perkSlot[perkId] ?? null; }
 async function perkInfo(perkId) { await runes(); return mem.perkInfo?.[perkId] ?? null; }
 
 // Stat-shards (mod) hebben geen style; namen voor de UI.
@@ -121,4 +124,4 @@ async function imageUrls() {
   };
 }
 
-module.exports = { setCacheDir, version, lolalyticsPatch, champions, lolalyticsSlug, items, runes, perkStyle, perkInfo, SHARDS, imageUrls };
+module.exports = { setCacheDir, version, lolalyticsPatch, champions, lolalyticsSlug, items, runes, perkStyle, perkSlot, perkInfo, SHARDS, imageUrls };

@@ -180,3 +180,4 @@ main { padding: 18px; max-width: 1140px; width: 100%; margin: 0 auto; display: g
 .runepage.choosable, .build.choosable:not(.on) { cursor: pointer; opacity: .75; transition: opacity .15s, border-color .15s; }
 .runepage.choosable:hover, .build.choosable:not(.on):hover { opacity: 1; border-color: var(--gold-dim); }
 .build.on .stat { color: var(--gold, #c8aa6e); }
+.item.counter img { outline: 2px solid var(--blue); outline-offset: -2px; }

@@ -43,7 +43,8 @@ async function runePages(opts) {
     pri: (x.set.pri || []).map(Number), sec: (x.set.sec || []).map(Number), mod: (x.set.mod || []).map(Number),
   });
   const pages = [mk(r.pick, "Meest gespeeld")];
-  if (r.win && r.win !== r.pick) pages.push(mk(r.win, "Hoogste winrate"));
+  // pick en win zijn vaak precies dezelfde page: dan niet twee keer tonen.
+  if (r.win?.set && JSON.stringify(r.win.set) !== JSON.stringify(r.pick.set)) pages.push(mk(r.win, "Hoogste winrate"));
   return { pages: pages.filter(Boolean), analysed: d.analysed, avgWr: d.avgWinRate, header: d.header };
 }
 

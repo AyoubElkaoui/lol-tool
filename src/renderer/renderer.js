@@ -130,7 +130,7 @@ function renderRunes(s) {
   const many = s.runes.pages.length > 1;
   r.innerHTML = `<h2>Runes <small>in de client als “LoLTool …”${many ? " · klik om te wisselen" : ""}</small></h2>` + s.runes.pages.map((p, i) => `
     <div class="runepage ${i === activeIdx ? "active" : many ? "choosable" : ""}" ${i !== activeIdx ? `data-rune="${i}" title="Klik om deze page in de client te zetten"` : ""}>
-      <div class="ph"><b>${esc(p.label)}${i === activeIdx ? " · actief" : many ? " · klik om te kiezen" : ""}</b><span>${p.wr}% · ${Number(p.n).toLocaleString("nl-NL")} games</span></div>
+      <div class="ph"><b>${esc(p.label)}${i === activeIdx ? " · actief" : many ? " · klik om te kiezen" : ""}</b><span>${p.team ? esc(p.note || "aangepast op hun team") : p.wr != null ? `${p.wr}% · ${Number(p.n).toLocaleString("nl-NL")} games` : ""}</span></div>
       <div class="trees">
         <div class="tree"><div class="tname">${treeName(p.pri[0])}</div><div class="perks">${perk(p.pri[0], true)}${p.pri.slice(1).map((id) => perk(id)).join("")}</div></div>
         <div class="tree"><div class="tname">${treeName(p.sec[0])}</div><div class="perks">${p.sec.map((id) => perk(id)).join("")}</div></div>
@@ -144,7 +144,8 @@ function renderItems(s) {
   const it = $("#items");
   if (!s.items) { it.innerHTML = "<h2>Items</h2><div class='wr'>—</div>"; return; }
   const gold = (id) => s.items.gold?.[id] ? `<span class="g">${s.items.gold[id]}</span>` : "";
-  const item = (id, n, core) => `<div class="item ${core ? "core" : ""}"><img src="${s.items.itemUrl}${id}.png" title="${esc(s.items.names[id] || id)}" alt="" />${n ? `<span class="n">${n}</span>` : ""}${gold(id)}</div>`;
+  const why = buildTab === "team" && s.teamBuild?.why || {};
+  const item = (id, n, core) => `<div class="item ${core ? "core" : ""} ${why[id] ? "counter" : ""}"><img src="${s.items.itemUrl}${id}.png" title="${esc(s.items.names[id] || id)}${why[id] ? " · tegen " + esc(why[id]) : ""}" alt="" />${n ? `<span class="n">${n}</span>` : ""}${gold(id)}</div>`;
   const row = (label, html) => html ? `<div class="irow"><div class="ilabel">${label}</div><div class="iline">${html}</div></div>` : "";
   const hasTeam = s.teamBuild?.changed;
   if (!hasTeam) buildTab = "std";
@@ -155,6 +156,7 @@ function renderItems(s) {
   it.innerHTML = "<h2>Items <small>twee sets in de winkel: standaard en vs team</small></h2>" + tabs
     + row("Start", s.items.starters.map((id) => item(id)).join(""))
     + row(buildTab === "team" && hasTeam ? "Build vs dit team" : "Build in volgorde", core.map((id, i) => item(id, i + 1, true)).join('<span class="arrow">›</span>'))
+    + (buildTab === "team" && hasTeam && Object.keys(why).length ? `<ul class="teamnotes">${Object.entries(why).map(([id, w]) => `<li><b>${esc(s.items.names[id] || id)}</b> tegen ${esc(w)}</li>`).join("")}</ul>` : "")
     + (buildTab === "team" && hasTeam && s.teamBuild.defensive?.length ? row("Defensief als het misgaat", s.teamBuild.defensive.map((id) => item(id)).join("")) : "")
     + row(s.enemy ? `Tegen ${esc(s.enemy.name)} eerst overwegen` : "Situationeel", s.items.situational.map((id) => item(id)).join(""))
     + optRow(4, "4e item: meest gewonnen") + optRow(5, "5e item") + optRow(6, "6e item")
