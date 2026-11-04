@@ -59,10 +59,12 @@ function pickRow(s, r, top) {
   const facts = r.taken ? ["al weg"] : r.wr == null ? ["te weinig data"] : [`${Number(r.n).toLocaleString("nl-NL")} games`];
   const rec = record(s, r.champ);
   if (rec) facts.push(`jij: ${rec}`);
+  if (r.favorite) facts.push("voorkeur bij twijfel");
+  const vs = r.vs?.length ? `<small class="worst">${r.vs.map((v) => `${v.laner ? "<b>" : ""}${esc(v.name)} ${pct(v.wr)}${v.laner ? "</b>" : ""}`).join(" · ")}</small>` : "";
   const worst = r.worst?.length ? `<small class="worst">Zwak tegen ${r.worst.map((w) => `${esc(w.name)} ${pct(w.wr)}`).join(", ")}</small>` : "";
   const hover = r.taken ? "" : `data-hover="pick" data-champ="${r.champ.id}" title="Klik om ${esc(r.champ.name)} te hoveren"`;
   return `<div class="pick ${r.taken ? "gone" : ""} ${top ? "top" : ""}" ${hover}><img src="${icon(s, r.champ)}" alt="" />
-    <div class="pinfo"><b>${esc(r.champ.name)}${top ? `<span class="tag">Aanrader</span>` : ""}</b><small>${esc(facts.join(" · "))}</small>${worst}</div>
+    <div class="pinfo"><b>${esc(r.champ.name)}${top ? `<span class="tag">Aanrader</span>` : ""}</b><small>${esc(facts.join(" · "))}</small>${vs}${worst}</div>
     ${r.wr != null && !r.taken ? `<span class="pwr ${wrLevel(r.wr)}">${pct(r.wr)}</span>` : ""}</div>`;
 }
 
@@ -78,9 +80,13 @@ function renderPicks(s) {
     el.innerHTML = `<h2>Blind pick <small>${esc(LANE_NL[p.lane] || p.lane)} · nog geen tegenstander · verwachte winrate over alle matchups</small></h2><div class="picklist">${pool}</div>`;
     return;
   }
-  el.innerHTML = `<h2>Counter picks <small>tegen ${esc(p.enemy.name)} · ${esc(LANE_NL[p.lane] || p.lane)} · jouw winrate in de matchup</small></h2>
-    <div class="pickcols"><div><div class="ilabel">Jouw pool</div><div class="picklist">${pool}</div></div>
-    <div><div class="ilabel">Beste in deze lane</div><div class="picklist">${p.best.map((r) => pickRow(s, r)).join("") || "<span class='wr'>Te weinig data</span>"}</div></div></div>`;
+  const team = p.enemies?.length > 1 || (p.enemies?.length && !p.enemy);
+  const sub = team
+    ? `tegen hun team (${p.enemies.length}/5)${p.enemy ? ` · ${esc(p.enemy.name)} in jouw lane telt dubbel` : ""} · ${esc(LANE_NL[p.lane] || p.lane)}`
+    : `tegen ${esc(p.enemy.name)} · ${esc(LANE_NL[p.lane] || p.lane)} · jouw winrate in de matchup`;
+  const best = p.enemy ? `<div><div class="ilabel">Beste in deze lane tegen ${esc(p.enemy.name)}</div><div class="picklist">${p.best.map((r) => pickRow(s, r)).join("") || "<span class='wr'>Te weinig data</span>"}</div></div>` : "";
+  el.innerHTML = `<h2>Counter picks <small>${sub}</small></h2>
+    <div class="pickcols"><div><div class="ilabel">Jouw pool</div><div class="picklist">${pool}</div></div>${best}</div>`;
 }
 
 function renderData(s) {
@@ -118,18 +124,20 @@ function renderTeam(s) {
 function renderRunes(s) {
   const r = $("#runes");
   if (!s.runes) { r.innerHTML = "<h2>Runes</h2><div class='wr'>—</div>"; return; }
-  const activeIdx = s.settings.runeChoice === "win" && s.runes.pages[1] ? 1 : 0;
+  const activeIdx = s.runeIdx ?? (s.settings.runeChoice === "win" && s.runes.pages[1] ? 1 : 0);
   const perk = (id, key) => { const i = s.runes.perkInfo[id]; return i ? `<img class="${key ? "key" : ""}" src="${DD}/cdn/img/${i.icon}" title="${esc(i.name)}" alt="${esc(i.name)}" />` : ""; };
   const treeName = (id) => { const i = s.runes.perkInfo[id]; const st = i && s.runes.perkInfo[i.style]; return st ? `<img src="${DD}/cdn/img/${st.icon}" alt="" />${esc(st.name)}` : ""; };
-  r.innerHTML = "<h2>Runes <small>in de client als “LoLTool …”</small></h2>" + s.runes.pages.map((p, i) => `
-    <div class="runepage ${i === activeIdx ? "active" : ""}">
-      <div class="ph"><b>${esc(p.label)}${i === activeIdx ? " · actief" : ""}</b><span>${p.wr}% · ${Number(p.n).toLocaleString("nl-NL")} games</span></div>
+  const many = s.runes.pages.length > 1;
+  r.innerHTML = `<h2>Runes <small>in de client als “LoLTool …”${many ? " · klik om te wisselen" : ""}</small></h2>` + s.runes.pages.map((p, i) => `
+    <div class="runepage ${i === activeIdx ? "active" : many ? "choosable" : ""}" ${i !== activeIdx ? `data-rune="${i}" title="Klik om deze page in de client te zetten"` : ""}>
+      <div class="ph"><b>${esc(p.label)}${i === activeIdx ? " · actief" : many ? " · klik om te kiezen" : ""}</b><span>${p.wr}% · ${Number(p.n).toLocaleString("nl-NL")} games</span></div>
       <div class="trees">
         <div class="tree"><div class="tname">${treeName(p.pri[0])}</div><div class="perks">${perk(p.pri[0], true)}${p.pri.slice(1).map((id) => perk(id)).join("")}</div></div>
         <div class="tree"><div class="tname">${treeName(p.sec[0])}</div><div class="perks">${p.sec.map((id) => perk(id)).join("")}</div></div>
       </div>
       <div class="shards">${p.mod.map((id) => `<span class="shard">${esc(s.runes.shards[id] || id)}</span>`).join("")}</div>
     </div>`).join("");
+  r.querySelectorAll("[data-rune]").forEach((el) => el.addEventListener("click", () => api.chooseRunes(Number(el.dataset.rune))));
 }
 
 function renderItems(s) {
@@ -150,8 +158,15 @@ function renderItems(s) {
     + (buildTab === "team" && hasTeam && s.teamBuild.defensive?.length ? row("Defensief als het misgaat", s.teamBuild.defensive.map((id) => item(id)).join("")) : "")
     + row(s.enemy ? `Tegen ${esc(s.enemy.name)} eerst overwegen` : "Situationeel", s.items.situational.map((id) => item(id)).join(""))
     + optRow(4, "4e item: meest gewonnen") + optRow(5, "5e item") + optRow(6, "6e item")
-    + (s.items.builds?.length ? `<div class="ilabel">Meest gespeelde volledige builds</div>` + s.items.builds.slice(0, 3).map((b) => `<div class="build">${b.items.map((id) => item(id)).join("")}<span class="stat"><b>${b.wr}%</b> · ${b.picks} games</span></div>`).join("") : "");
+    + (s.items.builds?.length ? `<div class="ilabel">Meest gespeelde volledige builds · klik om te kiezen</div>` + s.items.builds.slice(0, 3).map((b, i) => {
+      const on = (s.items.buildIdx ?? 0) === i;
+      return `<div class="build choosable ${on ? "on" : ""}" data-build="${i}" title="${on ? "Gekozen build" : "Klik om deze build als item set te zetten"}">${b.items.map((id) => item(id)).join("")}<span class="stat">${on ? "✓ gekozen · " : ""}<b>${b.wr}%</b> · ${b.picks} games</span></div>`;
+    }).join("") : "");
   it.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => { buildTab = t.dataset.tab; renderItems(s); }));
+  it.querySelectorAll("[data-build]").forEach((el) => el.addEventListener("click", () => {
+    const i = Number(el.dataset.build);
+    if (i !== (s.items.buildIdx ?? 0)) { buildTab = "std"; api.chooseBuild(i === 0 ? null : i); }
+  }));
 }
 
 function renderSpells(s) {

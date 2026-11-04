@@ -1,5 +1,6 @@
 // Pick-advies voordat je lockt: counter picks zodra de tegenstander in jouw lane
-// bekend is, anders de veiligste blind pick uit je pool.
+// bekend is, anders de veiligste blind pick uit je pool. Zodra er tegenstanders bekend
+// zijn telt het hele team mee (vslane), niet alleen de tegenstander in jouw lane.
 // vsWr in ep=counter is de winrate van de opgevraagde champ; voor "wat counter X"
 // halen we daarom de lijst van X op en daarna de eigen lijst van elke kandidaat.
 
@@ -33,22 +34,74 @@ async function vsEnemy({ slug, enemyId, lane, patch, tier }) {
   } catch { return null; }
 }
 
-async function counterAdvice({ enemy, lane, pool, taken, champs, patch, tier }) {
-  const opts = { lane, patch, tier };
-  const poolRows = await Promise.all(pool.map(async (c) => ({ champ: c, taken: taken.has(c.id), ...(await vsEnemy({ ...opts, slug: c.lolaSlug, enemyId: enemy.id })) })));
-  const { list } = await lol.counters({ ...opts, slug: enemy.lolaSlug });
-  const inPool = new Set(pool.map((c) => c.id));
-  const candidates = list
-    .filter((r) => r.defaultLane === lane && r.n >= MIN_GAMES && !taken.has(r.cid) && !inPool.has(r.cid) && champs[r.cid])
-    .sort((a, b) => a.vsWr - b.vsWr).slice(0, CANDIDATES);
-  const best = await Promise.all(candidates.map(async (r) => ({ champ: champs[r.cid], ...((await vsEnemy({ ...opts, slug: champs[r.cid].lolaSlug, enemyId: enemy.id })) || { wr: round1(100 - r.vsWr), n: r.n }) })));
+const LANES = ["top", "jungle", "middle", "bottom", "support"];
+const LANE_WEIGHT = 2;   // de directe tegenstander in jouw lane telt dubbel
+const DOUBT = 1.0;       // binnen zoveel %-punt van de beste = twijfel → voorkeurs-champ
+
+// Winrate van één pool-champ tegen elk bekend vijandelijk team-lid. Per tegenstander
+// pakken we de lane waarin hij het vaakst tegen deze champ staat (vslane met de meeste games);
+// de tegenstander in jouw eigen lane staat vast.
+async function vsTeam({ slug, enemyIds, laneEnemyId, lane, patch, tier, champs }) {
+  const lists = {};
+  await Promise.all(LANES.map(async (vslane) => {
+    try { lists[vslane] = (await lol.counters({ patch, slug, lane, vslane, tier })).list; } catch { lists[vslane] = []; }
+  }));
+  const vs = [];
+  for (const id of enemyIds) {
+    let best = null;
+    for (const vslane of id === laneEnemyId ? [lane] : LANES) {
+      const row = lists[vslane].find((r) => r.cid === id);
+      if (row && row.n >= MIN_GAMES / 3 && (!best || row.n > best.n)) best = { ...row, vslane };
+    }
+    if (best) vs.push({ id, name: champs[id]?.name || "?", wr: best.vsWr, n: best.n, lane: best.vslane, laner: id === laneEnemyId });
+  }
+  const w = (v) => (v.laner ? LANE_WEIGHT : 1);
+  const total = vs.reduce((s, v) => s + w(v), 0);
+  const wr = total ? round1(vs.reduce((s, v) => s + v.wr * w(v), 0) / total) : null;
+  return { wr, n: vs.reduce((s, v) => s + v.n, 0), vs };
+}
+
+// Bij twijfel (geen data of binnen DOUBT van de beste) gaat de voorkeurs-champ bovenaan.
+function rank(rows, favorite) {
   const byWr = (a, b) => (b.wr ?? -1) - (a.wr ?? -1);
-  return { mode: "counter", lane, enemy, pool: poolRows.sort(byWr), best: best.sort(byWr).slice(0, SHOW) };
+  rows.sort(byWr);
+  if (!favorite) return rows;
+  const fav = rows.find((r) => r.champ.lolaSlug === favorite && !r.taken);
+  const top = rows.find((r) => !r.taken && r.wr != null);
+  if (fav && (!top || fav.wr == null || top.wr - fav.wr <= DOUBT)) {
+    fav.favorite = true;
+    rows.splice(rows.indexOf(fav), 1);
+    rows.unshift(fav);
+  }
+  return rows;
+}
+
+// Tegenstanders bekend: jouw pool gescoord tegen het hele bekende team; bij een bekende
+// tegenstander in jouw lane ook de 5 beste champs in die lane tegen hem.
+async function counterAdvice({ enemy, enemyIds, lane, pool, taken, champs, patch, tier, favorite }) {
+  const opts = { lane, patch, tier };
+  const ids = enemyIds?.length ? enemyIds : [enemy.id];
+  const poolRows = await Promise.all(pool.map(async (c) => {
+    const t = await vsTeam({ ...opts, slug: c.lolaSlug, enemyIds: ids, laneEnemyId: enemy?.id, champs });
+    const laneRow = t.vs.find((v) => v.laner);
+    return { champ: c, taken: taken.has(c.id), wr: t.wr, n: t.n, vs: t.vs, laneWr: laneRow?.wr ?? null };
+  }));
+  let best = [];
+  if (enemy) {
+    const { list } = await lol.counters({ ...opts, slug: enemy.lolaSlug });
+    const inPool = new Set(pool.map((c) => c.id));
+    const candidates = list
+      .filter((r) => r.defaultLane === lane && r.n >= MIN_GAMES && !taken.has(r.cid) && !inPool.has(r.cid) && champs[r.cid])
+      .sort((a, b) => a.vsWr - b.vsWr).slice(0, CANDIDATES);
+    best = await Promise.all(candidates.map(async (r) => ({ champ: champs[r.cid], ...((await vsEnemy({ ...opts, slug: champs[r.cid].lolaSlug, enemyId: enemy.id })) || { wr: round1(100 - r.vsWr), n: r.n }) })));
+    best = best.sort((a, b) => (b.wr ?? -1) - (a.wr ?? -1)).slice(0, SHOW);
+  }
+  return { mode: "counter", lane, enemy: enemy || null, enemies: ids.map((id) => champs[id]).filter(Boolean), pool: rank(poolRows, favorite), best };
 }
 
 // Geen tegenstander bekend: verwachte winrate over alle matchups in de lane, gewogen
 // naar hoe vaak je ze tegenkomt, plus de matchups waar je het meest van moet vrezen.
-async function blindAdvice({ lane, pool, taken, champs, patch, tier }) {
+async function blindAdvice({ lane, pool, taken, champs, patch, tier, favorite }) {
   const rows = await Promise.all(pool.map(async (c) => {
     let list = [];
     try { list = (await lol.counters({ patch, slug: c.lolaSlug, lane, tier })).list; } catch { /* lege rij */ }
@@ -58,11 +111,11 @@ async function blindAdvice({ lane, pool, taken, champs, patch, tier }) {
     const worst = [...matchups].sort((a, b) => a.vsWr - b.vsWr).slice(0, 3).map((r) => ({ name: champs[r.cid]?.name || "?", wr: r.vsWr }));
     return { champ: c, taken: taken.has(c.id), wr, n: games, worst };
   }));
-  return { mode: "blind", lane, enemy: null, pool: rows.sort((a, b) => (b.wr ?? -1) - (a.wr ?? -1)), best: [] };
+  return { mode: "blind", lane, enemy: null, pool: rank(rows, favorite), best: [] };
 }
 
-async function advice({ enemy, ...rest }) {
-  return enemy ? counterAdvice({ enemy, ...rest }) : blindAdvice(rest);
+async function advice({ enemy, enemyIds, ...rest }) {
+  return enemy || enemyIds?.length ? counterAdvice({ enemy, enemyIds, ...rest }) : blindAdvice(rest);
 }
 
 // Eigen record per champion uit de matchhistorie van de client (alleen Summoner's Rift).

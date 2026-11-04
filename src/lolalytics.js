@@ -29,8 +29,9 @@ async function call(params) {
 
 // Let op: lolalytics' JSON-endpoint negeert matchup-parameters (getest 20-10-2026);
 // runes/items zijn dus per champion+lane+tier, de matchup komt uit ep=counter.
-function base(ep, { patch, slug, lane, tier }) {
-  return { ep, v: "1", patch, c: slug, lane, tier, queue: "ranked", region: "all" };
+// ep=counter kent wel vslane: de matchups tegen wie in díé lane van het andere team staat.
+function base(ep, { patch, slug, lane, tier, vslane }) {
+  return { ep, v: "1", patch, c: slug, lane, ...(vslane && vslane !== lane ? { vslane } : {}), tier, queue: "ranked", region: "all" };
 }
 
 async function runePages(opts) {

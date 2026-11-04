@@ -73,6 +73,8 @@
     setSettings: async (p) => { state = { ...state, settings: { ...state.settings, ...p } }; subs.forEach((f) => f(state)); return state.settings; },
     reapply: async () => true,
     hover: async (type, id) => { console.log("hover", type, id); return true; },
+    chooseRunes: async (idx) => { state = { ...state, runeIdx: idx }; subs.forEach((f) => f(state)); return true; },
+    chooseBuild: async (idx) => { state = { ...state, items: { ...state.items, buildIdx: idx } }; subs.forEach((f) => f(state)); return true; },
     onState: (f) => subs.push(f),
   };
 })();
