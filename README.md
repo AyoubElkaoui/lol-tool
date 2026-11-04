@@ -3,7 +3,9 @@
 Zet automatisch de beste runes en item set in de League-client zodra je in champ select je champion kiest, en laat een korte matchup-guide zien. Werkt op Windows en Mac.
 
 ## Voor Danny (Mac)
-1. Download `LoL Tool-x.y.z.dmg` uit de nieuwste release op GitHub.
+Uitgebreide stap-voor-stap gids (ook voor "beschadigd"-meldingen): [docs/INSTALL-MAC.md](docs/INSTALL-MAC.md).
+
+1. Download `LoL Tool-x.y.z-arm64.dmg` (Apple M-chip) uit de nieuwste release op GitHub.
 2. Open de dmg en sleep **LoL Tool** naar Programma's.
 3. Eerste keer: rechtermuisknop op de app → **Open** → **Open** (de app is niet door Apple gesigneerd).
 4. Start League of Legends. Laat LoL Tool open staan; in champ select verschijnen runes, items en guide vanzelf en staan ze meteen in je client.
