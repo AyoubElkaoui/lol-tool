@@ -31,7 +31,7 @@ codesign --force --deep -s - "/Applications/LoL Tool.app"
 
 ## 4. Instellen (één keer)
 1. Klik in LoL Tool rechtsboven op **⚙**.
-2. **Profiel**: kies **Danny (jungle: Shaco / Kindred / Rek'Sai)**.
+2. **Profiel**: kies **Danny (jungle: Rengar / Kha'Zix / Nidalee)**.
 3. **Data van tier**: kies je eigen elo (Gold en hoger is een goede standaard).
 4. Laat "Runes automatisch zetten", "Item sets automatisch zetten" en "Beste ban en pick automatisch hoveren" aan.
    Zet "Summoner spells automatisch zetten" aan als je dat wilt; kies bij **Flash op** D of F.
@@ -41,7 +41,7 @@ De instellingen blijven bewaard.
 1. Start League of Legends; laat LoL Tool openstaan (de volgorde maakt niet uit).
 2. In champ select:
    - **Ban-fase**: ban-advies voor jouw pool.
-   - **Pick-fase**: de tool hovert de beste champ uit je pool tegen hun team (bij twijfel Shaco). **Locken doe je zelf.**
+   - **Pick-fase**: de tool hovert de beste champ uit je pool tegen hun team (bij twijfel Rengar). **Locken doe je zelf.**
    - Zodra de vijandelijke jungler bekend is, zet de tool runes **tegen die jungler** en een item set in je client
      (pages/sets heten "LoLTool …"). Andere rune page of build? Klik erop in de tool.
 3. Na de game zie je je stats en 1-2 werkpunten.

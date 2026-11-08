@@ -1,139 +1,4 @@
 {
-  "irelia": {
-    "algemeen": [
-      "Level 1-2: alleen traden als je Q-reset op minions kunt pakken; zonder reset ben je zwak.",
-      "Powerspike: level 3 (W) en eerste item. Daarvoor niet all-in zonder jungle.",
-      "Q-resets zijn alles: zet minions laag voordat je de tegenstander opzoekt, dan heb je 3-4 dashes.",
-      "E-stun altijd door de tegenstander plaatsen, niet ernaast; mis je E, trek je terug.",
-      "Na 2 items kun je side-lane splitten; join teamfights alleen via flank, nooit frontaal."
-    ],
-    "fallback": [
-      "Onbekende matchup: farm veilig tot level 3, trade kort met Q-reset en loop weg.",
-      "Koop Doran's Blade + 1 pot; eerste back met 1100+ goud."
-    ],
-    "vs": {
-      "jax": [
-        "Trade NOOIT in zijn E (counter strike); wacht tot hij hem gebruikt heeft, dan all-in.",
-        "Pre-6 ben jij sterker als je Q-resets hebt; na zijn eerste item (Trinity/Divine) kantelt het.",
-        "Hou je E voor als hij op je springt (Q); stun hem uit zijn combo.",
-        "Vroeg Wit's End of Plated Steelcaps tegen zijn on-hit damage."
-      ],
-      "sett": [
-        "Zijn W (Haymaker) ontwijk je met een Q-dash op een minion, niet door weg te lopen.",
-        "Trade als zijn grit-balk leeg is; hij wint lange trades als hij vol zit.",
-        "Niet in de muur-E laten trekken: sta niet tussen hem en een minion-wave.",
-        "Blijf buiten zijn Q-range als hij level 1-2 agressief is; jij wint na level 3."
-      ],
-      "darius": [
-        "Blijf UIT zijn Q-buitenrand: sta dicht op hem of ver weg, nooit op 450 range.",
-        "Zijn E (pull) heeft cooldown 24s: trade direct nadat hij hem mist.",
-        "Boven 5 stacks loop je weg of dash je door minions; hij wint elke lange trade.",
-        "Kies Steelcaps + Wit's End; let op zijn ult-executes onder 25% hp."
-      ],
-      "malphite": [
-        "Hij bouwt armor; jouw AD-damage doet weinig, dus kies Blade of the Ruined King als tweede item.",
-        "Zijn Q poke is zijn enige druk: trade terug zodra hij Q gebruikt (cooldown 8s).",
-        "Na 6 kan hij je altijd stunnen met R; speel niet op 400+ range van je minions.",
-        "Win de lane via farm, niet via kills; roam niet, hij pusht dan gratis."
-      ],
-      "garen": [
-        "Trade pas na zijn Q (silence); loop zijn E (spin) uit door achter een minion te dashen.",
-        "Hij heeft geen escape: met jungle-gank is hij dood na level 6.",
-        "Niet onder 40% hp blijven bij 6: zijn R executet.",
-        "Steelcaps vroeg, Bramble Vest als hij snowballt."
-      ],
-      "tryndamere": [
-        "Vroeg (level 1-3) ben jij sterker; hij schaalt met crit. Druk hem onder tower vóór level 6.",
-        "Na zijn R (5 sec onsterfelijk) altijd terugtrekken, niet erin blijven vechten.",
-        "Executioner's Calling tegen zijn healing; Steelcaps tegen crits.",
-        "Vraag jungle vroeg, hij heeft geen dash door een stun heen."
-      ]
-    }
-  },
-  "teemo": {
-    "algemeen": [
-      "Level 1-2 ben je de baas: auto-Q-auto zodra hij een minion wil pakken, dan weglopen. Zo win je de lane in de eerste 3 waves.",
-      "Shrooms zijn je map-control: river-bush, tri-bush en de pad naar je eigen jungle. Nooit in een rechte lijn op de lane.",
-      "Powerspike: Nashor's Tooth + Sorcerer's Shoes. Daarna Liandry's/Blackfire tegen tanks, Deathcap als je snowballt.",
-      "Teamfights: nooit frontaal. Sta op de rand, blind de carry die naar je team loopt, shroom de uitgang.",
-      "Side-lane na 2 items: push en shroom tussen hun jungle en de lane; vecht niet 1v1 tegen fighters zonder blind."
-    ],
-    "fallback": [
-      "Trade met blind (Q) als hij op je wil, loop weg; farm met auto's. Jij wint de lane via poke, niet via all-ins."
-    ],
-    "vs": {
-      "jax": [
-        "Blind (Q) precies als hij Q op je springt: dan mist hij alle auto's. Hou Q daarvoor, niet voor poke.",
-        "Zijn E (counter strike) blokkeert auto's: niet auto'en terwijl hij hem draait.",
-        "Na level 6 shroom je eigen escape-route; hij all-int je met ult.",
-        "Vroeg Nashor's, dan Rylai's om zijn Q-springen te vertragen."
-      ],
-      "tryndamere": [
-        "Pre-6: blind elke keer dat hij op je wil; hij kan niets zonder auto's.",
-        "Post-6: nooit onder 40% hp in zijn range, hij ult en pakt je.",
-        "Rylai's + Liandry's, Zhonya's als hij fed is.",
-        "Sta altijd met shrooms achter je bij de tower."
-      ],
-      "darius": [
-        "Blijf buiten zijn E-range; blind hem als hij toch E raakt en loop.",
-        "Zijn passive (bleed) doet niets als je niet 5 keer geraakt wordt: korte trades, nooit lang.",
-        "Shroom de river, hij wordt gegankt en kan niet weg.",
-        "Blackfire Torch tegen zijn hp-stacking."
-      ],
-      "garen": [
-        "Hij zit onder zijn tower als jij 3 waves pokt: Q zodra hij Q activeert, dan is zijn silence verspild.",
-        "Loop uit zijn E (spin) weg zodra hij begint, nooit erin blijven.",
-        "Na 6 ult hij jou onder 30% hp: back vroeg, blijf hoog.",
-        "Liandry's eerst: hij bouwt armor/hp."
-      ],
-      "sett": [
-        "Zijn W (Haymaker) komt na een lange trade: trade kort, dan weg; blind als hij de grit vol heeft.",
-        "Niet dicht bij muren staan (E-pull).",
-        "Rylai's om zijn walk-up te stoppen."
-      ]
-    }
-  },
-  "jax": {
-    "algemeen": [
-      "Jij schaalt: eerste 10 minuten niet sterven, farm met W op minions.",
-      "E (counter strike) start je ALTIJD als je in een trade gaat, niet als reactie.",
-      "Powerspike: Trinity/Divine + Steelcaps. Daarna split-pushen en 1v1 pakken.",
-      "Q naar een ward of minion om te ontsnappen; hou Q voor een escape als de jungler mist."
-    ],
-    "fallback": [
-      "Farm, scale, geen risico voor je eerste item.",
-      "Trade pas met E actief en loop weg als E afloopt."
-    ],
-    "vs": {
-      "warwick": [
-        "Hij wint vroeg via Q-heal; trade kort en loop weg, geen lange trades voor level 6.",
-        "Zijn E vermindert damage: stop auto's tijdens zijn E-fear.",
-        "Executioner's Calling vroeg, daarna BotRK.",
-        "Hij pakt je in de jungle met zijn W-speed: ward river."
-      ],
-      "volibear": [
-        "Niet traden als zijn W-mark op je staat (hij heelt en doet dubbel).",
-        "Zijn Q-stun ontwijk je met E-stun op het juiste moment.",
-        "Vroeg Bramble Vest tegen zijn sustain.",
-        "Na 6 kan hij je tower uitzetten: vecht niet onder je eigen tower."
-      ],
-      "sett": [
-        "Trade als zijn grit laag is; zijn W-damage schaalt met wat jij hem aandoet.",
-        "Laat je E hem stunnen uit zijn W (Haymaker) voor een gratis trade.",
-        "Hij wint level 1-2; begin met passief farmen tot je E hebt."
-      ],
-      "riven": [
-        "Haar burst zit in Q3/W-combo: E-stun timen op haar derde Q.",
-        "Vroeg Steelcaps + Bramble; na Trinity win jij elke lange trade.",
-        "Als haar E-shield (schild) actief is, geen trades starten."
-      ],
-      "malphite": [
-        "Ga BotRK + Divine Sunderer; geen crit-items tegen zijn armor.",
-        "Hij kan niet tegen split-push: push side lanes na 2 items.",
-        "Zijn Q-poke is zijn enige druk, trade terug als hij Q heeft gebruikt."
-      ]
-    }
-  },
   "galio": {
     "algemeen": [
       "Jouw taak is hard-engage voor je team: W-taunt + R over je laner als zijn jungler gankt.",
@@ -161,143 +26,161 @@
       ]
     }
   },
-  "ziggs": {
+  "ekko": {
     "algemeen": [
-      "Blijf achter minions en poke met Q; jouw lane-damage is Q-spam plus passive auto.",
-      "W (bounce) is je escape, niet je engage: hou hem voor jungle-ganks.",
-      "Powerspike: Luden's/Blackfire + Sorcerer's Shoes. Daarna torens slopen met W op toren onder 25%.",
-      "Teamfights: sta ver achter, R op de frontline, nooit frontaal."
+      "Lane: Q op de wave én de laner; pak de 3e hit van je passive (E-blink + auto) voor een korte trade en loop terug.",
+      "Level 3 met E: all-in als je laner lager staat dan 70%. Level 6: R is je redding én je burst; gebruik hem nooit te vroeg.",
+      "Build: Lich Bane of Hextech Rocketbelt → Sorcerer's Shoes → Zhonya's/Shadowflame. Veel AD: Zhonya's 2e.",
+      "Roam na een gepushte wave: mid naar bot via de river, W vooruit gooien zodat de stun klaar ligt als je aankomt.",
+      "Teamfights: flank, wacht op hun CC, dan E naar de carry. R terug als het misgaat."
     ],
     "fallback": [
-      "Farm met Q, trade alleen als je 3 spells kunt raken, anders weg."
+      "Farm met Q tot 6, roam met je jungler. Geen lange trades; korte passive-procs en terug."
     ],
     "vs": {
+      "galio": [
+        "Zijn passive-schild eet je combo: wacht tot hij het gebruikt heeft.",
+        "Roam als hij roamt; jij bent sneller op de side-lanes."
+      ],
+      "sylas": [
+        "Hij steelt je R (terugspoelen): na zijn R-steal niet all-in.",
+        "Trade als zijn E (chain) op cooldown staat."
+      ],
       "yasuo": [
-        "Hij dasht door je minions naar je toe: sta nooit tussen 2 minions.",
-        "W-bounce ALTIJD beschikbaar houden om uit zijn dash te komen.",
-        "Vroeg Seeker's Armguard, daarna Zhonya's."
+        "Je Q gaat niet door zijn windwall: trade als die op cooldown is.",
+        "Level 3 all-in met E-W-stun wint."
       ],
       "zed": [
-        "Na zijn R: direct W-bounce weg en Zhonya's zodra je het hebt.",
-        "Level 1-5 win jij via poke; druk hem laag voor level 6.",
-        "Ward de side-bush, hij roamt na 6."
+        "Bewaar R voor zijn R: na zijn mark terugspoelen = geen kill.",
+        "Vroeg Zhonya's-onderdeel (Seeker's Armguard)."
+      ],
+      "ahri": [
+        "Ontwijk haar E (charm); zonder E wint jouw all-in.",
+        "W stun op haar R-eindpositie is lastig: speel rond haar R-cooldown."
       ]
     }
   },
-  "veigar": {
+  "sylas": {
     "algemeen": [
-      "Je bent een farm-champ: elke Q op een minion is +stack. Doel: 100 stacks op 15 min.",
-      "E (cage) is een dubbele muur: zet hem zodat de rand op de tegenstander valt, niet het midden.",
-      "Powerspike: Rod of Ages + Seraph's, dan Rabadon's. Daarvoor niet vechten.",
-      "R is een execute: alleen onder 40% hp gebruiken, anders is het verspilling."
+      "Lane: W heelt je in een lang gevecht; trade met E-chain → Q → W op lage HP en win lange trades.",
+      "Level 6: steel de sterkste R van hun team (bijv. Malphite, Amumu, Leona, Jarvan) – kijk vóór je game welke de beste is.",
+      "Build: Lich Bane of Hextech Rocketbelt → Sorcerer's Shoes → Zhonya's/Shadowflame. Veel tanks: Void Staff 3e.",
+      "Na 6 roamen met E: een gestolen engage-R wint fights over de hele map.",
+      "Teamfights: wacht op je W-heal; ga pas in als hun belangrijkste CC verbruikt is, dan R + E naar de carry."
     ],
     "fallback": [
-      "Farm en stack, trade niet. Jouw lane win je om 25 minuten, niet om 5."
+      "Farm tot 6, trade lang (jouw W wint dat), en roam met een gestolen engage-R."
     ],
     "vs": {
-      "yasuo": [
-        "Cage ZODRA hij Q3-tornado klaar heeft: hij dasht erin.",
-        "Zhonya's vroeg, hij dive't op 6.",
-        "Nooit Q op minions als hij op 2 dashes afstand staat."
+      "galio": [
+        "Steel zijn R: global engage voor jouw team.",
+        "Zijn W-taunt stopt je E; trade als hij hem gebruikt heeft."
       ],
-      "fizz": [
-        "Cage op jezelf als hij E (playful) gebruikt: hij landt in de stun.",
-        "Zhonya's als tweede item, altijd.",
-        "Blijf onder toren tot Rod of Ages."
+      "ekko": [
+        "Zijn R terugspoelen: na zijn R pas all-in.",
+        "Lange trades winnen jij dankzij je W."
       ],
-      "katarina": [
-        "Cage op haar dagger-landing: haar E brengt haar erin.",
-        "Verlaat de cage-radius nooit zonder W-combo klaar.",
-        "Mercury's + Zhonya's; vraag jungle pre-6, ze heeft geen escape zonder dagger."
+      "syndra": [
+        "Ontwijk haar E-stun (bal + push); daarna win je de all-in.",
+        "Haar R stelen = execute-damage voor jou."
+      ],
+      "veigar": [
+        "Nooit in zijn E-kooi vechten. Wacht tot hij hem gebruikt, dan E-chain.",
+        "Zijn R stelen is een execute; perfect tegen squishies."
+      ],
+      "malzahar": [
+        "Zijn passive-schild eerst breken met Q, dan E.",
+        "QSS niet nodig: steel zijn R voor een suppress op hun carry."
       ]
     }
   },
-  "shaco": {
+  "rengar": {
     "algemeen": [
-      "Level 1: zet 2-3 W-boxen bij je eigen buff (of in hun jungle voor een invade) vóór 1:30; de boxen fearen en doen de clear voor je.",
-      "Gank vroeg (level 2-3): Q (onzichtbaar) door de lane, E (slow) als ze flashen. Kies lanes met CC of veel damage.",
-      "Build AD: Profane Hydra/Youmuu's → Opportunity/Serylda → Edge of Night. AP-Shaco (boxen) alleen als hun team weinig waards/sweepers heeft.",
-      "Zet boxen op plekken waar ze lopen: river-bushes, achter drakes/void grubs. Een box-veld maakt elke chase in jouw jungle gevaarlijk.",
-      "Teamfights: niet als eerste in. Wacht tot de carry zijn flash/dash kwijt is, dan Q achter hem en R-kloon als afleiding."
+      "Clear: Q-reset op elke camp, W healt in de clear. Full clear en gank vanuit bushes (sprong in bush = je passive).",
+      "Elke kill/assist op een vijand geeft trofeeën (Bonetooth Necklace): 4+ voor de R-ganks; speel daarnaartoe.",
+      "Build lethality: Profane Hydra/Youmuu's → Opportunity/Serylda → Edge of Night. Tegen veel tanks: Black Cleaver (bruiser).",
+      "R (Thrill of the Hunt) laat je de dichtstbijzijnde vijand zien: gebruik hem op squishies, nooit op de tank.",
+      "Empowered W haalt CC weg: bewaar je ferocity voor als je gestunned wordt in een fight."
     ],
     "fallback": [
-      "Speel rond tempo: vroege ganks en invades. Pak pas een 1v1 als je boxen in de buurt staan."
+      "Farm tot 6 en hunt squishies met R. Vecht vanuit bushes; nooit in open terrein beginnen."
     ],
     "vs": {
-      "leesin": [
-        "Zet boxen bij jouw buffs: hij invadeert graag. Met 3 boxen win je elke vroege 1v1.",
-        "Hij counter-gankt hard; gank de lane aan de andere kant van de map."
-      ],
-      "kindred": [
-        "Steel haar marks: zet boxen bij haar camps en wacht onzichtbaar.",
-        "Ze is zwak vroeg; invade level 3."
-      ],
-      "graves": [
-        "Niet 1v1 voor 6: zijn burst wint. Ga om hem heen en gank.",
-        "Steel zijn camps als hij aan de andere kant zit."
-      ],
-      "warwick": [
-        "Geen lange fights: zijn heal wint. Hit-and-run met Q en anti-heal (Executioner's) vroeg."
-      ]
-    }
-  },
-  "kindred": {
-    "algemeen": [
-      "Clear: W (wolf) eerst op de camp, Q tussen elke auto voor speed. Full clear, dan op elke mark spelen die veilig is.",
-      "Marks zijn je scaling: pak er zo veel mogelijk. Een mark in hun jungle alleen als je laners prio hebben.",
-      "Build: Kraken Slayer → Blade of the Ruined King/Runaan's → Infinity Edge. Tegen veel AD: Guardian Angel 3e/4e.",
-      "R (Lamb's Respite) is een team-redder: zet hem op jezelf of je carry als een all-in begint, niet te vroeg.",
-      "Teamfights: blijf achter je frontline en kite met Q; jij bent de carry, niet de engage."
-    ],
-    "fallback": [
-      "Farm en pak veilige marks. Na 2 items ben jij de sterkste in de jungle-1v1s."
-    ],
-    "vs": {
-      "leesin": [
-        "Hij is vroeg sterker: geen invades level 2-4. Ward je buffs.",
-        "Na Kraken en een paar marks win je elke 1v1."
-      ],
-      "shaco": [
-        "Zet je wolf (W) op de box-plekken; hij is zwak als zijn boxen weg zijn.",
-        "Control ward in je eigen jungle tegen zijn invades."
-      ],
       "khazix": [
-        "Nooit alleen in de jungle vechten: zijn isolatie-damage maakt je kapot.",
-        "Blijf bij je team; je R houdt je laners in leven tegen zijn sprong."
-      ],
-      "reksai": [
-        "Ze is vroeg sterk: ward de ingangen van je jungle.",
-        "Kite haar met Q; ze heeft maar één knock-up."
-      ]
-    }
-  },
-  "reksai": {
-    "algemeen": [
-      "Clear: Q (unburrowed) op camps, ga burrowed tussen camps voor de speed en tunnels (E). Full clear of 3-camp en gank.",
-      "Tunnels zijn alles: leg ze bij elke lane-bush en bij drake/baron. Daarmee gank je vanuit plekken waar ze niet kijken.",
-      "Gank: burrowed naar de lane, W unburrow onder de vijand = knock-up, dan Q en E. Tremor Sense laat je ze zien zonder ward.",
-      "Build: Sundered Sky/Eclipse → Black Cleaver → Sterak's/Death's Dance. Veel tanks: Black Cleaver eerst.",
-      "R pas als iemand laag staat: hij doet missende-HP-damage en bijna niemand ontsnapt eraan."
-    ],
-    "fallback": [
-      "Speel vroeg agressief: invades en ganks level 3. Rek'Sai valt laat af, dus maak de game vroeg."
-    ],
-    "vs": {
-      "leesin": [
-        "Gelijk vroeg: wie eerst knock-up raakt wint. Wacht zijn Q af, dan W.",
-        "Tunnels in zijn jungle om zijn route te volgen."
-      ],
-      "kindred": [
-        "Invade haar level 3: zij kan je vroeg niet aan.",
-        "Pak haar marks eerst; zonder marks schaalt ze niet."
-      ],
-      "shaco": [
-        "Tremor Sense ziet hem onzichtbaar bewegen; gebruik dat om zijn ganks af te vangen.",
-        "Boxen kapot met Q; niet in een box-veld vechten."
+        "Hij is vroeg sterker in isolatie: geen 1v1 in zijn jungle.",
+        "Na 6 is jouw R-burst hoger; wacht op zijn sprong (E) en reageer."
       ],
       "nidalee": [
-        "Ze is vroeg sterker in snel clearen; ga ganken in plaats van haar volgen.",
-        "Ward tegen haar invades en hou W klaar voor als ze springt."
+        "Ze clear sneller: steel haar camps als ze aan de andere kant is.",
+        "Ontwijk haar speer (Q) achter minions/camps."
+      ],
+      "leesin": [
+        "Hij wint vroeg; ward je buff en counter-gank.",
+        "Na 2 items one-shot je hem uit een bush."
+      ],
+      "graves": [
+        "Zijn burst wint vroeg; vecht alleen vanuit bush.",
+        "Tegen hem Edge of Night of Death's Dance."
+      ]
+    }
+  },
+  "khazix": {
+    "algemeen": [
+      "Isolatie is alles: Q doet veel meer damage als het doelwit alleen staat. Kies je gevechten bij camps en in de river.",
+      "Evolueer: 1e Q (meestal, voor isolatie-burst) of R (onzichtbaarheid) afhankelijk van het team, daarna E (sprong).",
+      "Build lethality: Profane Hydra/Youmuu's → Opportunity/Serylda → Edge of Night. Veel tanks: Black Cleaver.",
+      "Ganks: R (onzichtbaar) naar de lane, W voor de slow, Q op de geïsoleerde laner.",
+      "Teamfights: niet beginnen. Wacht tot de carry los staat, dan E → Q → R reset na een kill."
+    ],
+    "fallback": [
+      "Farm en invade waar je laners prio hebben. Pak geïsoleerde vijanden; geen 1v5."
+    ],
+    "vs": {
+      "rengar": [
+        "Hij is na 6 sterker als hij uit een bush springt: ward bushes in je jungle.",
+        "Vroeg ben jij sterker in isolatie: invade level 3."
+      ],
+      "nidalee": [
+        "Ze kitet je met speren: kom van de zijkant of onzichtbaar (R).",
+        "Steel haar camps; ze leeft van tempo."
+      ],
+      "leesin": [
+        "Hij wint pre-6: geen 1v1. Na Q-evolutie win jij.",
+        "Zijn ward-hop ontsnapping: wacht met E tot hij hem gebruikt."
+      ],
+      "kindred": [
+        "Pak haar marks af: zij is zwak vroeg in isolatie.",
+        "Haar R houdt haar in leven: wacht tot die voorbij is."
+      ]
+    }
+  },
+  "nidalee": {
+    "algemeen": [
+      "Clear: kat-vorm (R) Q/W/E op camps, menselijke E (heal) tussen camps. Jij bent een van de snelste junglers: gebruik het tempo.",
+      "Speer (menselijke Q) van ver = jouw damage. Raak hem op afstand, dan kat-vorm W (pounce) voor de kill.",
+      "Build AP: Lich Bane/Shadowflame → Sorcerer's Shoes → Rabadon's/Zhonya's. Tegen veel AD: Zhonya's 2e.",
+      "Invade vroeg en vaak: jij wint de meeste level 2-4 gevechten; ward hun jungle met traps (menselijke W).",
+      "Teamfights: speer van achteren, nooit vooraan. Pounce pas als iemand gemarkeerd (gehunt) is."
+    ],
+    "fallback": [
+      "Speel op tempo: invades en vroege ganks. Raak speren op afstand; vecht pas dichtbij als ze gemarkeerd zijn."
+    ],
+    "vs": {
+      "khazix": [
+        "Hou afstand en spear: dichtbij wint hij.",
+        "Blijf in de buurt van je laners; zijn isolatie-damage maakt je kapot."
+      ],
+      "rengar": [
+        "Ward bushes in je jungle: hij komt altijd uit een bush.",
+        "Zhonya's vroeg als hij snel trofeeën stackt."
+      ],
+      "leesin": [
+        "Allebei vroeg sterk: wie het eerst zijn skillshot raakt wint.",
+        "Invade zijn tweede buff met je mid."
+      ],
+      "graves": [
+        "Hij wint dichtbij: kite met speren.",
+        "Steel zijn camps; hij heeft ze nodig om te schalen."
       ]
     }
   }

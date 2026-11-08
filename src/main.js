@@ -18,9 +18,9 @@ const lcu = new LcuClient();
 let win = null;
 
 const PROFILES = {
-  ayoub: { name: "Ayoub", lane: "top", pool: ["irelia", "teemo", "jax"], pools: { middle: ["irelia", "ekko"] } },
+  ayoub: { name: "Ayoub", lane: "middle", pool: ["galio", "ekko", "sylas"] },
   // teamPick: score tegen het hele vijandelijke team; favorite: bij twijfel deze champ.
-  danny: { name: "Danny", lane: "jungle", pool: ["shaco", "kindred", "reksai"], favorite: "shaco", teamPick: true },
+  danny: { name: "Danny", lane: "jungle", pool: ["rengar", "khazix", "nidalee"], favorite: "rengar", teamPick: true },
 };
 
 // Pool voor de lane die je in champ select krijgt; anders de standaard-pool van het profiel.
