@@ -1,7 +1,8 @@
 // Live build-data van lolalytics (onofficiële JSON-endpoint die de site zelf
 // gebruikt). Werkt met de champion-slug, niet het id.
 //   ep=rune           runes (most played + highest winrate), optioneel vs=<slug>
-//   ep=build-itemset  itemSet1..5 (starters .. volledige 5-item builds), itemBootSet
+//   ep=build-itemset  itemSetN = eerste N voltooide items (ongesorteerd!), itemBootSetN = idem met boots
+//                     (startitems zitten hier niet in: die komen van u.gg)
 //   ep=counter        matchups: per tegenstander vsWr, n, defaultLane
 // Geldige tiers: bronze, silver, gold, gold_plus, platinum_plus, emerald_plus, all.
 
@@ -49,20 +50,54 @@ async function runePages(opts) {
 }
 
 const ids = (entry) => String(entry[0]).split("_").map(Number).filter(Number.isFinite);
+const rows = (list) => (list || []).map((e) => ({ items: ids(e), picks: Number(e[1]) || 0, wins: Number(e[2]) || 0 }))
+  .filter((r) => r.items.length).sort((a, b) => b.picks - a.picks); // lolalytics levert ze ongesorteerd
+const wr = (r) => (r.picks ? Math.round((r.wins / r.picks) * 1000) / 10 : 0);
+
+// itemSetN = de eerste N voltooide items (zonder boots), in koopvolgorde. Een build volgen we
+// stap voor stap: bij elke stap de meest gekochte voortzetting van wat er al ligt.
+// Onder MIN_STEP games stoppen we; de rest vult main.js aan met u.gg's 4e-6e item.
+const MIN_STEP = 30;
+function extend(path, sets, from) {
+  const out = [...path];
+  for (let n = from; n <= 5; n++) {
+    const list = sets[n] || [];
+    const prefix = list.find((r) => r.items.length === n && out.every((id, i) => r.items[i] === id));
+    // Geen exacte volgorde? Dan dezelfde items in een andere volgorde.
+    const any = prefix || list.find((r) => r.items.length === n && out.every((id) => r.items.includes(id)));
+    if (!any || any.picks < MIN_STEP) break;
+    const next = any.items.find((id) => !out.includes(id));
+    if (next == null) break;
+    out.push(next);
+  }
+  return out;
+}
 
 async function itemBuild(opts, isBoot) {
   const d = await call(base("build-itemset", opts));
   const s = d?.itemSets || {};
-  const starters = [...new Set((s.itemSet1 || []).slice(0, 4).flatMap(ids))].slice(0, 3);
-  const boot = [...new Set((s.itemBootSet1 || []).slice(0, 8).flatMap(ids))].find(isBoot) || null;
-  const full = (s.itemSet5 || []).map((e) => ({ items: ids(e), picks: Number(e[1]) || 0, wins: Number(e[2]) || 0 }))
-    .map((b) => ({ ...b, wr: b.picks ? Math.round((b.wins / b.picks) * 1000) / 10 : 0 }));
-  const core = full[0]?.items || [];
-  const ordered = core.length ? [core[0], ...(boot ? [boot] : []), ...core.slice(1)] : boot ? [boot] : [];
+  const sets = Object.fromEntries([1, 2, 3, 4, 5].map((n) => [n, rows(s[`itemSet${n}`])]));
+  if (!sets[1].length) throw new Error("geen item-data");
+
+  // Boots: tel per boot de games over alle boot-sets (de eerste paar items + boots).
+  const bootPicks = new Map();
+  for (let n = 2; n <= 4; n++) for (const r of rows(s[`itemBootSet${n}`])) for (const id of r.items) if (isBoot(id)) bootPicks.set(id, (bootPicks.get(id) || 0) + r.picks);
+  const boot = [...bootPicks.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+  // Builds om uit te kiezen: de populairste eerste-3-items, elk doorgetrokken naar 5 items.
+  const starts = sets[3].filter((r) => r.picks >= MIN_STEP).slice(0, 8);
+  const builds = (starts.length ? starts : sets[2].slice(0, 4))
+    .map((r) => ({ items: extend(r.items, sets, r.items.length + 1), picks: r.picks, wins: r.wins, wr: wr(r) }))
+    .filter((b, i, a) => a.findIndex((x) => JSON.stringify(x.items) === JSON.stringify(b.items)) === i);
+  const main = builds[0]?.items || extend([sets[1][0].items[0]], sets, 2);
+  const core = [main[0], ...(boot ? [boot] : []), ...main.slice(1)];
+
+  // Situationeel: wat in volle builds vaak gekocht wordt maar niet in de core zit.
   const freq = new Map();
-  for (const b of full.slice(1, 10)) for (const id of b.items) if (!isBoot(id) && !core.includes(id)) freq.set(id, (freq.get(id) || 0) + b.picks);
+  for (const n of [4, 5]) for (const r of sets[n]) for (const id of r.items) if (!isBoot(id) && !main.includes(id)) freq.set(id, (freq.get(id) || 0) + r.picks);
+  for (const r of sets[1]) if (!main.includes(r.items[0])) freq.set(r.items[0], (freq.get(r.items[0]) || 0) + r.picks / 10); // andere eerste items
   const situational = [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id).slice(0, 6);
-  return { starters, boot, core: ordered, situational, builds: full.slice(0, 8) };
+  return { starters: [], boot, core, situational, builds };
 }
 
 // Runes tegen één tegenstander. De JSON-endpoint negeert vs=, maar de vs-pagina van de site

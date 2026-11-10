@@ -176,6 +176,18 @@ function teamPage(page, team) {
 }
 
 // Startitems als u.gg niet bereikbaar is: op klasse.
+// lolalytics heeft na het 3e/4e item vaak te weinig games om de build te volgen;
+// dan vullen we aan met u.gg's meest gekochte 4e, 5e en 6e item (tot 5 items + boots).
+function fillBuild(list, options) {
+  const out = [...list];
+  for (const k of [4, 5, 6]) {
+    if (out.filter((id) => !isBoot(id)).length >= 5) break;
+    const best = [...(options?.[k] || [])].sort((a, b) => b.games - a.games).find((o) => !out.includes(o.id) && !isBoot(o.id));
+    if (best) out.push(best.id);
+  }
+  return out;
+}
+
 function fallbackStarters(me, lane) {
   if (lane === "jungle") return [1101, 2003]; // jungle pet + pot
   if (me.tags?.includes("Mage") || an.dmgType(me) === "AP") return [1056, 2003];
@@ -223,6 +235,8 @@ async function processPick(session, champs, patch) {
       try { u = await ugg.overview({ patch: await dd.lolalyticsPatch(), championId: me.id, lane, tier: settings.tier }); }
       catch (e) { u = null; log("u.gg (spells/skills) niet beschikbaar: " + e.message); }
       items.starters = u?.starters?.length ? u.starters : fallbackStarters(me, lane);
+      items.core = fillBuild(items.core, u?.itemOptions);
+      items.builds = (items.builds || []).map((b) => ({ ...b, items: fillBuild(b.items, u?.itemOptions) }));
       const up = await uggPage(u).catch(() => null);
       if (up && !runes.pages.some((p) => samePage(p, up))) runes.pages.push(up);
       baseRunes = runes;

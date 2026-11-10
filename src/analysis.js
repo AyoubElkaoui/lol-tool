@@ -2,7 +2,7 @@
 // Alles op basis van Data Dragon-tags + lolalytics counters; geen magie,
 // gewoon de regels die een goede speler ook toepast.
 
-const HEALERS = new Set(["aatrox", "drmundo", "fiddlesticks", "illaoi", "irelia", "jax", "kayn", "maokai", "mordekaiser", "nasus", "olaf", "renekton", "sett", "soraka", "swain", "sylas", "tryndamere", "vladimir", "volibear", "warwick", "yone", "yuumi", "zac", "briar", "ambessa", "garen", "darius", "nami", "sona", "senna", "kindred", "rengar", "aurelionsol", "vayne", "jinx"]);
+const HEALERS = new Set(["aatrox", "drmundo", "fiddlesticks", "illaoi", "irelia", "jax", "kayn", "maokai", "mordekaiser", "nasus", "olaf", "renekton", "sett", "soraka", "swain", "sylas", "tryndamere", "vladimir", "volibear", "warwick", "yone", "yuumi", "zac", "briar", "ambessa", "garen", "darius", "nami", "sona", "senna", "kindred", "rengar", "vayne"]);
 const CC_HEAVY = new Set(["leona", "nautilus", "morgana", "lissandra", "sejuani", "amumu", "malphite", "ashe", "rell", "thresh", "blitzcrank", "alistar", "maokai", "zac", "ornn", "galio", "skarner", "veigar", "lux"]);
 const AP_OVERRIDE = new Set(["kayle", "diana", "akali", "katarina", "ekko", "fizz", "gragas", "sylas", "mordekaiser", "singed", "rumble", "elise", "evelynn", "nidalee", "amumu", "fiddlesticks", "kennen", "teemo", "gwen", "lillia", "vladimir", "swain", "aurora", "mel", "hwei", "smolder"]);
 
@@ -75,8 +75,10 @@ function myClass(me, core = [], itemData = {}) {
 // Per dreiging en klasse: items in volgorde van voorkeur. Items die in de data van jouw
 // champ voorkomen krijgen voorrang (die bouwt jouw champ echt).
 const COUNTER_ITEMS = {
-  armor: { fighter: [6333, 3143, 3742], assassin: [6333, 3026], marksman: [3026, 6333], mage: [3157], tank: [3075, 3143, 3110] },
-  mr: { fighter: [3156, 3091, 3065], assassin: [3156, 3814], marksman: [3139, 3156, 3091], mage: [3102], tank: [4401, 2504, 3065] },
+  // Mage-lijsten bevatten ook tank-items voor AP-tanks (Galio, Amumu): die worden alleen gekozen
+  // als de champ ze in de data echt bouwt (zie rank in teamBuild).
+  armor: { fighter: [6333, 3143, 3742], assassin: [6333, 3026], marksman: [3026, 6333], mage: [3157, 3075, 3110], tank: [3075, 3143, 3110] },
+  mr: { fighter: [3156, 3091, 3065], assassin: [3156, 3814], marksman: [3139, 3156, 3091], mage: [3102, 2504, 6664, 4401], tank: [4401, 2504, 3065] },
   antiheal: { fighter: [6609, 3123], assassin: [6609, 3123], marksman: [3033, 3123], mage: [3165, 3916], tank: [3075, 3076] },
   tanks: { fighter: [3071, 3153], assassin: [6694, 3071], marksman: [3036, 3153], mage: [3135, 6653], tank: [3075] },
   burst: { fighter: [3053, 6333], assassin: [3814, 3026], marksman: [3026, 6673], mage: [3157, 3102], tank: [6665, 3143] },
@@ -102,7 +104,9 @@ function threats(team, laner) {
 function teamBuild({ me, core, situational, options, itemData, team, laner, defaultBoot, isBoot }) {
   const cls = myClass(me, core, itemData);
   const boots = chooseBoots({ me, team, laner, defaultBoot, cls });
-  const known = new Set([...core, ...situational, ...[4, 5, 6].flatMap((k) => (options?.[k] || []).map((o) => o.id))]);
+  // Hoe vaker jouw champ een item koopt, hoe lager de rank: core, dan situationeel, dan u.gg-opties.
+  const order = [...core, ...situational, ...[4, 5, 6].flatMap((k) => [...(options?.[k] || [])].sort((a, b) => b.games - a.games).map((o) => o.id))];
+  const rank = (id) => { const i = order.indexOf(id); return i < 0 ? Infinity : i; };
   const coreNoBoots = core.filter((id) => !isBoot(id));
   const picked = [];
   for (const t of threats(team, laner)) {
@@ -113,7 +117,7 @@ function teamBuild({ me, core, situational, options, itemData, team, laner, defa
       if (p) p.why += ` en ${t.why}`; else picked.push({ id: already, why: t.why, key: t.key, inCore: true });
       continue;
     }
-    const id = ids.find((x) => known.has(x)) || ids[0];
+    const id = [...ids].sort((a, b) => rank(a) - rank(b))[0];
     if (id) picked.push({ id, why: t.why, key: t.key });
   }
   const counters = picked.filter((p) => !p.inCore).slice(0, 2);
