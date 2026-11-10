@@ -13,17 +13,41 @@ const SHOW = 5;
 
 const round1 = (x) => Math.round(x * 10) / 10;
 
-// Wie van de tegenstanders staat in jouw lane? Lane-percentages zijn beter dan
-// defaultLane: ze werken ook als de champ geen counter-rij met jou heeft.
+// Wie van de tegenstanders staat in jouw lane? We verdelen alle bekende tegenstanders
+// tegelijk over de 5 lanes (elke lane maar één keer) en nemen de verdeling die het
+// waarschijnlijkst is volgens hun lane-percentages. Per champ los kijken gaat mis bij
+// flex-picks: Taliyah (47% jungle, 45% mid) + Sylas (44% mid) gaf Taliyah als mid.
+const ALL_LANES = ["top", "jungle", "middle", "bottom", "support"];
 async function laneOpponent({ enemyIds, lane, champs, patch, tier }) {
-  let best = null;
+  const known = [];
   for (const id of enemyIds) {
     const c = champs[id]; if (!c) continue;
-    let share = 0;
-    try { share = (await lol.counters({ patch, slug: c.lolaSlug, lane, tier })).stats?.lanes?.[lane] || 0; } catch { /* volgende */ }
-    if (share >= MIN_LANE_SHARE && (!best || share > best.share)) best = { champ: c, share };
+    let lanes = {};
+    try { lanes = (await lol.counters({ patch, slug: c.lolaSlug, lane, tier })).stats?.lanes || {}; } catch { /* geen data */ }
+    known.push({ champ: c, lanes });
   }
-  return best?.champ || null;
+  if (!known.length) return null;
+  const best = assignLanes(known);
+  const pick = best.find((x) => x.lane === lane);
+  return pick && (pick.lanes[lane] || 0) >= MIN_LANE_SHARE ? pick.champ : null;
+}
+
+// Alle manieren om k champs over k verschillende lanes te zetten (max. 5! = 120): hoogste
+// product van de lane-percentages wint. Een champ zonder data telt als 0,5% overal.
+function assignLanes(known) {
+  let best = null, bestScore = -Infinity;
+  const used = new Set(), cur = [];
+  const walk = (i, score) => {
+    if (i === known.length) { if (score > bestScore) { bestScore = score; best = [...cur]; } return; }
+    for (const l of ALL_LANES) {
+      if (used.has(l)) continue;
+      used.add(l); cur.push({ ...known[i], lane: l });
+      walk(i + 1, score + Math.log(Math.max(known[i].lanes[l] || 0, 0.5)));
+      cur.pop(); used.delete(l);
+    }
+  };
+  walk(0, 0);
+  return best || [];
 }
 
 async function vsEnemy({ slug, enemyId, lane, patch, tier }) {
@@ -133,4 +157,4 @@ function myStats(history) {
   return out;
 }
 
-module.exports = { laneOpponent, advice, myStats };
+module.exports = { laneOpponent, assignLanes, advice, myStats };

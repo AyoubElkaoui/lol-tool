@@ -100,11 +100,11 @@ async function itemBuild(opts, isBoot) {
   return { starters: [], boot, core, situational, builds };
 }
 
-// Runes tegen één tegenstander. De JSON-endpoint negeert vs=, maar de vs-pagina van de site
-// heeft ze wel: die rendert de data als Qwik-state (<script type="qwik/json">), met
-// verwijzingen in base36 naar andere objecten. We zoeken de rune-sets {wr, n, page, set}.
+// Data tegen één tegenstander. De JSON-endpoint negeert vs=, maar de vs-pagina van de site
+// heeft het wel: die rendert de data als Qwik-state (<script type="qwik/json">), met
+// verwijzingen in base36 naar andere objecten.
 const vsMemo = new Map();
-async function vsRunePages({ patch, slug, lane, tier, vs, vslane }) {
+async function vsObjects({ patch, slug, lane, tier, vs, vslane }) {
   const url = `https://lolalytics.com/lol/${slug}/vs/${vs}/build/?lane=${lane}&vslane=${vslane || lane}&tier=${tier}&patch=${patch}`;
   const hit = vsMemo.get(url);
   if (hit && Date.now() - hit.t < TTL) return hit.v;
@@ -115,6 +115,14 @@ async function vsRunePages({ patch, slug, lane, tier, vs, vslane }) {
   if (!m) throw new Error("lolalytics vs: geen data in pagina");
   const objs = JSON.parse(m[1]).objs || [];
   const ref = (v) => (typeof v === "string" && /^[0-9a-z]+$/.test(v) && parseInt(v, 36) < objs.length ? objs[parseInt(v, 36)] : v);
+  const v = { objs, ref };
+  vsMemo.set(url, { t: Date.now(), v });
+  return v;
+}
+
+// Runes: de rune-sets {wr, n, page, set}. Eerste = meest gespeeld, tweede = hoogste winrate.
+async function vsRunePages(opts) {
+  const { objs, ref } = await vsObjects(opts);
   const nums = (v) => { const a = ref(v); return Array.isArray(a) ? a.map(ref).map(Number).filter(Number.isFinite) : []; };
   const sets = [];
   for (const o of objs) {
@@ -125,10 +133,28 @@ async function vsRunePages({ patch, slug, lane, tier, vs, vslane }) {
     if (page.pri.length === 4 && page.sec.length === 2 && page.mod.length === 3 && Number.isFinite(page.n)) sets.push(page);
   }
   if (!sets.length) throw new Error("lolalytics vs: geen rune-data");
-  // Eerste set = meest gespeeld, tweede = hoogste winrate (zelfde volgorde als ep=rune).
-  const v = sets.slice(0, 2);
-  vsMemo.set(url, { t: Date.now(), v });
-  return v;
+  return sets.slice(0, 2);
+}
+
+// Items tegen deze tegenstander: {pick, win} met per build items: {start, item1..3 (één item),
+// item4..6 (opties)}, elk {id, n, wr}. pick = meest gespeeld, win = hoogste winrate per slot.
+async function vsItems(opts) {
+  const { objs, ref } = await vsObjects(opts);
+  const root = objs.find((o) => o && typeof o === "object" && !Array.isArray(o) && "pick" in o && "win" in o && ref(ref(o.pick)?.items));
+  if (!root) throw new Error("lolalytics vs: geen item-data");
+  const slot = (v) => { const x = ref(v); return x && typeof x === "object" && !Array.isArray(x) ? { id: Number(ref(x.id)), n: Number(ref(x.n)) || 0, wr: Number(ref(x.wr)) || 0 } : null; };
+  const opts3 = (v) => { const a = ref(v); return Array.isArray(a) ? a.map(slot).filter((x) => x && Number.isFinite(x.id)) : []; };
+  const build = (b) => {
+    const it = ref(ref(b)?.items) || {};
+    const start = ref(it.start) || {};
+    const set = ref(start.set);
+    return {
+      start: { ids: Array.isArray(set) ? set.map(ref).map(Number).filter(Number.isFinite) : [], n: Number(ref(start.n)) || 0, wr: Number(ref(start.wr)) || 0 },
+      core: [slot(it.item1), slot(it.item2), slot(it.item3)].filter((x) => x && Number.isFinite(x.id)),
+      options: { 4: opts3(it.item4), 5: opts3(it.item5), 6: opts3(it.item6) },
+    };
+  };
+  return { pick: build(root.pick), win: build(root.win) };
 }
 
 async function counters(opts) {
@@ -164,4 +190,4 @@ async function defaultLane(opts) {
   try { const d = await call(base("rune", opts)); return d?.header?.defaultLane || null; } catch { return null; }
 }
 
-module.exports = { vsRunePages, runePages, itemBuild, counters, resolvePatch, defaultLane };
+module.exports = { vsItems, vsRunePages, runePages, itemBuild, counters, resolvePatch, defaultLane };

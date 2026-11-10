@@ -155,19 +155,19 @@ function renderItems(s) {
   const optRow = (k, label) => opts?.[k]?.length ? row(label, opts[k].slice(0, 4).map((o) => `<div class="item"><img src="${s.items.itemUrl}${o.id}.png" title="${esc(s.items.names[o.id] || o.id)} · ${o.wr}% (${o.games})" alt="" /><span class="g">${o.wr}%</span></div>`).join("")) : "";
   it.innerHTML = "<h2>Items <small>twee sets in de winkel: standaard en vs team</small></h2>" + tabs
     + row("Start", s.items.starters.map((id) => item(id)).join(""))
-    + row(buildTab === "team" && hasTeam ? "Build vs dit team" : "Build in volgorde", core.map((id, i) => item(id, i + 1, true)).join('<span class="arrow">›</span>'))
+    + row(buildTab === "team" && hasTeam ? "Build vs dit team" : s.items.vs && s.items.buildIdx == null ? `Build tegen ${esc(s.items.vs.name)} <small>(${s.items.vs.n} games)</small>` : "Build in volgorde", core.map((id, i) => item(id, i + 1, true)).join('<span class="arrow">›</span>'))
     + (buildTab === "team" && hasTeam && Object.keys(why).length ? `<ul class="teamnotes">${Object.entries(why).map(([id, w]) => `<li><b>${esc(s.items.names[id] || id)}</b> tegen ${esc(w)}</li>`).join("")}</ul>` : "")
     + (buildTab === "team" && hasTeam && s.teamBuild.defensive?.length ? row("Defensief als het misgaat", s.teamBuild.defensive.map((id) => item(id)).join("")) : "")
     + row(s.enemy ? `Tegen ${esc(s.enemy.name)} eerst overwegen` : "Situationeel", s.items.situational.map((id) => item(id)).join(""))
-    + optRow(4, "4e item: meest gewonnen") + optRow(5, "5e item") + optRow(6, "6e item")
+    + optRow(4, s.items.vs ? `4e item tegen ${esc(s.items.vs.name)}` : "4e item: meest gewonnen") + optRow(5, "5e item") + optRow(6, "6e item")
     + (s.items.builds?.length ? `<div class="ilabel">Meest gespeelde volledige builds · klik om te kiezen</div>` + s.items.builds.slice(0, 3).map((b, i) => {
-      const on = (s.items.buildIdx ?? 0) === i;
+      const on = (s.items.buildIdx ?? (s.items.vs ? -1 : 0)) === i;
       return `<div class="build choosable ${on ? "on" : ""}" data-build="${i}" title="${on ? "Gekozen build" : "Klik om deze build als item set te zetten"}">${b.items.map((id) => item(id)).join("")}<span class="stat">${on ? "✓ gekozen · " : ""}<b>${b.wr}%</b> · ${b.picks} games</span></div>`;
     }).join("") : "");
   it.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => { buildTab = t.dataset.tab; renderItems(s); }));
   it.querySelectorAll("[data-build]").forEach((el) => el.addEventListener("click", () => {
     const i = Number(el.dataset.build);
-    if (i !== (s.items.buildIdx ?? 0)) { buildTab = "std"; api.chooseBuild(i === 0 ? null : i); }
+    if (i !== (s.items.buildIdx ?? (s.items.vs ? -1 : 0))) { buildTab = "std"; api.chooseBuild(i === 0 && !s.items.vs ? null : i); }
   }));
 }
 

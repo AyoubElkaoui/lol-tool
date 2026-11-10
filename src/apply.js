@@ -44,7 +44,7 @@ async function applyItemSets(lcu, { championId, champName, build, teamBuild, vsN
   });
   const sets = [];
   if (teamBuild?.changed) {
-    sets.push(mk(`${champName} vs ${vsName || "team"}`, [
+    sets.push(mk(`${champName} vs dit team`, [
       block("Start", build.starters),
       block(`Boots: ${teamBuild.bootsName || "zie team"}`, [teamBuild.boots.id]),
       block("Eerste 3 vs dit team", teamBuild.build.slice(0, 3)),
@@ -52,7 +52,7 @@ async function applyItemSets(lcu, { championId, champName, build, teamBuild, vsN
       block("Defensief als het misgaat", teamBuild.defensive),
     ], 2));
   }
-  sets.push(mk(`${champName} standaard`, [
+  sets.push(mk(build.vs ? `${champName} vs ${build.vs.name}` : `${champName} standaard`, [
     block("Start", build.starters),
     block("Eerste 3 items", build.core.slice(0, 3)),
     block("Volledige build", build.core),

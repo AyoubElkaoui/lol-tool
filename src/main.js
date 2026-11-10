@@ -49,6 +49,8 @@ const activeRuneIdx = (pages) => {
   return settings.runeChoice === "win" && pages[1] ? 1 : 0;
 };
 const MIN_VS_RUNE_GAMES = 200;
+const MIN_VS_ITEM_GAMES = 200; // eerste item tegen deze tegenstander: minder games = ruis, dan de algemene build
+const SHRINK = 100;            // winrate van een item-optie trekken we 100 games richting het gemiddelde
 let lastKey = "", lastBanKey = "", lastPickKey = "", busy = false, acceptedId = null, eogShown = null;
 
 function log(msg) { state.log = [`${new Date().toLocaleTimeString("nl-NL")}  ${msg}`, ...state.log].slice(0, 60); push(); }
@@ -176,6 +178,28 @@ function teamPage(page, team) {
 }
 
 // Startitems als u.gg niet bereikbaar is: op klasse.
+// Build tegen de tegenstander in jouw lane (lolalytics vs-pagina). Item 1-3: wat het meest
+// gekocht wordt tegen hem (betrouwbaar, duizenden games). Item 4-6: de optie met de beste
+// winrate, maar "gekrompen" naar het gemiddelde zodat 76% over 25 games niet wint van
+// 56% over 1200 games: (wr*n + gem*SHRINK) / (n + SHRINK).
+function matchupBuild(vs) {
+  const b = vs?.pick;
+  if (!b?.core?.length || b.core[0].n < MIN_VS_ITEM_GAMES) return null;
+  const out = b.core.map((x) => x.id);
+  const options = {};
+  for (const k of [4, 5, 6]) {
+    const list = b.options[k] || [];
+    options[k] = list.map((o) => ({ id: o.id, wr: o.wr, games: o.n }));
+    const total = list.reduce((a, o) => a + o.n, 0);
+    if (!total) continue;
+    const avg = list.reduce((a, o) => a + o.wr * o.n, 0) / total;
+    const score = (o) => (o.wr * o.n + avg * SHRINK) / (o.n + SHRINK);
+    const best = list.filter((o) => !out.includes(o.id) && !isBoot(o.id)).sort((x, y) => score(y) - score(x))[0];
+    if (best) out.push(best.id);
+  }
+  return { core: out, options, starters: b.start.n >= MIN_VS_ITEM_GAMES ? b.start.ids : null, n: b.core[0].n };
+}
+
 // lolalytics heeft na het 3e/4e item vaak te weinig games om de build te volgen;
 // dan vullen we aan met u.gg's meest gekochte 4e, 5e en 6e item (tot 5 items + boots).
 function fillBuild(list, options) {
@@ -266,6 +290,20 @@ async function processPick(session, champs, patch) {
     const spellIds = u ? orderSpells(u.spells) : [];
     state.spells = u ? { ids: spellIds, names: spellIds.map((id) => ugg.SPELL_NAMES[id] || id), imgs: spellIds.map((id) => `${urls.champion("").replace("/champion/", "/spell/")}${ugg.SPELL_IMG[id] || ""}.png`) } : null;
 
+    // Build tegen jouw tegenstander in plaats van de algemene (tenzij je zelf een build koos).
+    let vsOptions = null;
+    if (state.enemy && buildIdx == null) {
+      try {
+        const mb = matchupBuild(await lol.vsItems({ ...opts, vs: state.enemy.lolaSlug }));
+        if (mb) {
+          const core = fillBuild(mb.core, u?.itemOptions);
+          items = { ...items, core, starters: mb.starters || items.starters, situational: items.situational.filter((id) => !core.includes(id)), vs: { name: state.enemy.name, n: mb.n } };
+          vsOptions = mb.options;
+          if (enemyChanged) log(`Build tegen ${state.enemy.name}: ${mb.n} games`);
+        } else if (enemyChanged) log(`Te weinig games tegen ${state.enemy.name} voor een eigen build; algemene build`);
+      } catch (e) { if (enemyChanged) log(`Build tegen ${state.enemy.name} niet beschikbaar: ${e.message}`); }
+    }
+
     // Gekozen build (klik in de app) in plaats van de meest gespeelde.
     const pickedBuild = buildIdx != null ? items.builds?.[buildIdx] : null;
     if (pickedBuild) {
@@ -274,10 +312,10 @@ async function processPick(session, champs, patch) {
     }
 
     // Matchup-laag: team-build, guide, situationele items (verandert als tegenstanders bijkomen).
-    const tb = an.teamBuild({ me, core: items.core, situational: items.situational, options: u?.itemOptions, itemData, team: state.team, laner: state.enemy, defaultBoot: items.boot, isBoot });
+    const tb = an.teamBuild({ me, core: items.core, situational: items.situational, options: vsOptions || u?.itemOptions, itemData, team: state.team, laner: state.enemy, defaultBoot: items.boot, isBoot });
     state.teamBuild = { ...tb, bootsName: itemNames[tb.boots.id] };
     state.guide = guide.build({ me, enemy: state.enemy, counterRow: laner?.row || null, runePage: runes.pages[activeRuneIdx(runes.pages)], itemBuild: items, itemNames, itemData, team: state.team, teamBuild: state.teamBuild, spells: state.spells, skills: state.skills });
-    state.items = { ...items, situational: state.guide.situationalIds || items.situational, names: itemNames, gold: itemGold, itemUrl: urls.item("").replace(/\.png$/, ""), options: u?.itemOptions || null, buildIdx: pickedBuild ? buildIdx : null };
+    state.items = { ...items, situational: state.guide.situationalIds || items.situational, names: itemNames, gold: itemGold, itemUrl: urls.item("").replace(/\.png$/, ""), options: vsOptions || u?.itemOptions || null, buildIdx: pickedBuild ? buildIdx : null };
     state.runeIdx = activeRuneIdx(runes.pages);
     push();
 

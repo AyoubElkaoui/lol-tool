@@ -28,6 +28,14 @@ items.core = fill(items.core);
 items.builds = items.builds.map((b) => ({ ...b, items: fill(b.items) }));
 console.log("start", items.starters.map((i) => names[i]));
 console.log("core ", items.core.map((i) => names[i]).join(" -> "));
+if (vs) {
+  try {
+    const v = await lol.vsItems({ ...opts, vs });
+    const fmt = (b) => b.core.map((x) => `${names[x.id]} (${x.n})`).join(" -> ") + " | 4e: " + b.options[4].map((x) => `${names[x.id]} ${x.wr}% (${x.n})`).join(", ");
+    console.log("vs   ", vs, "meest gespeeld:", fmt(v.pick));
+    console.log("vs   ", vs, "hoogste wr:    ", fmt(v.win));
+  } catch (e) { console.log("vs items niet beschikbaar:", e.message); }
+}
 for (const b of items.builds.slice(0, 4)) console.log("build", b.picks, b.wr + "%", b.items.map((i) => names[i]).join(" -> "));
 console.log("situ ", items.situational.map((i) => names[i]));
 const c = await lol.counters(opts);
