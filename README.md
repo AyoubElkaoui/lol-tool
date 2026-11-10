@@ -18,15 +18,19 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 - **Pick-fase (hoveren is genoeg):** runes (page "LoLTool …" actief), summoner spells, twee item sets ("standaard" en "vs team"), skill order, matchup-guide met winrate-badge.
 - **Danny (jungle):** pool Rengar / Kha'Zix / Nidalee. Zodra er tegenstanders bekend zijn scoort de tool elke champ tegen het hele vijandelijke team (de vijandelijke jungler telt dubbel); scheelt het minder dan 1% met de beste, of is er geen data, dan wordt het Rengar.
 - **Runes en builds wisselen:** klik op een andere rune page of build; die wordt meteen in de client gezet. Rune-opties: **runes tegen je tegenstander** (uit de lolalytics-matchuppagina; bij Danny tegen de vijandelijke jungler, standaard actief zodra hij bekend is, vanaf 200 games), meest gespeeld, hoogste winrate en u.gg (dubbele weg), plus een "vs dit team"-page (Tenacity bij veel CC, Health bij veel burst).
+- **Build tegen je tegenstander:** zodra de tegenstander in jouw lane bekend is (bij Danny de vijandelijke jungler) komt de build uit de lolalytics-matchuppagina: item 1-3 wat tegen hem het meest gekocht wordt, item 4-6 de optie met de beste winrate (gecorrigeerd voor weinig games). Onder 200 games: de algemene build.
+- **Tegenstander zelf kiezen:** klopt de geschatte tegenstander niet, klik dan in "Counter picks" of "Hun team" op de juiste champ; runes, items en guide gaan mee. "↺ Automatisch" laat de tool weer zelf kiezen.
+- **Automatisch bannen/locken (instelling, standaard uit):** in de laatste 8 seconden van je beurt bant/lockt de tool wat er gehoverd staat; staat er niets, dan de beste ban of pick. Jouw eigen hover gaat altijd voor.
+- **Tegenstander in jouw lane:** alle bekende tegenstanders worden tegelijk over de lanes verdeeld op hun lane-percentages, zodat een flex-pick (Sylas, Taliyah) niet zomaar als mid geteld wordt.
 - **Build vs dit team:** kijkt naar AD/AP, tanks, healers, assassins en CC, en kiest per dreiging een item dat bij jouw build past (een AP-build krijgt Zhonya's/Banshee's, AD-fighters Death's Dance/Maw, enz.). Per item staat erbij waarom.
 - **Counter picks (tot je lockt):** zodra de tegenstander in jouw lane bekend is: jouw pool op winrate tegen hem en de 5 beste champs in die lane. Nog geen tegenstander: de veiligste blind pick uit je pool, met de matchups om voor op te passen. Bezette champs tellen niet mee.
-- **Automatisch hoveren (standaard aan):** op jouw ban-beurt hovert de tool de beste ban, in de pick-fase de beste champ uit je pool. Wordt de tegenstander bekend of verandert hij, dan schakelt de tool om en gaan runes en items mee. Klikken op een pick of ban in de tool hovert die ook. Locken doe je altijd zelf en een eigen keuze wordt nooit overschreven.
+- **Automatisch hoveren (standaard aan):** op jouw ban-beurt hovert de tool de beste ban, in de pick-fase de beste champ uit je pool. Wordt de tegenstander bekend of verandert hij, dan schakelt de tool om en gaan runes en items mee. Klikken op een pick of ban in de tool hovert die ook. Een eigen keuze wordt nooit overschreven; locken doet de tool alleen als je automatisch locken aanzet.
 - **Jouw record:** winst/verlies per champion uit je eigen recente games, bij de picks en bovenin.
 - **Data-status:** bovenin staat van welke patch en tier de data is. De tool pakt de nieuwste patch zodra daar genoeg games op staan, ook als de app open blijft staan.
 - **Update-melding:** staat er een nieuwe versie op GitHub, dan verschijnt bovenin een downloadlink.
 - **Hun team:** AD/AP/tank/healer-telling, boots-keuze met reden, defensief item als het nodig is, anti-heal-advies. Werkt live bij als tegenstanders bijkomen.
 - **Na de game:** KDA, CS/min, vision en 1-2 concrete werkpunten.
-- **Instellingen:** profiel (Ayoub mid: Galio, Ekko, Sylas / Danny jungle: Rengar, Kha'Zix, Nidalee), tier, rune-keuze, auto runes/items/spells, ready check auto-accepteren, venster altijd bovenaan.
+- **Instellingen:** profiel (Ayoub mid: Galio, Ekko, Sylas / Danny jungle: Rengar, Kha'Zix, Nidalee), tier, rune-keuze, auto runes/items/spells, automatisch bannen/locken, ready check auto-accepteren, venster altijd bovenaan.
 
 ## Hoe het werkt
 - Leest de League-client via de lokale LCU-API (lockfile), niets wordt in de Riot-mappen geschreven.

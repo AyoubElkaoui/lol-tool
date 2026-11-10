@@ -181,3 +181,13 @@ main { padding: 18px; max-width: 1140px; width: 100%; margin: 0 auto; display: g
 .runepage.choosable:hover, .build.choosable:not(.on):hover { opacity: 1; border-color: var(--gold-dim); }
 .build.on .stat { color: var(--gold, #c8aa6e); }
 .item.counter img { outline: 2px solid var(--blue); outline-offset: -2px; }
+
+/* tegenstander kiezen */
+.chooser { margin: 10px 0 4px; }
+.chooser .ilabel small { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 6px; }
+.echoices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.echoice { display: flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; }
+.echoice img { width: 24px; height: 24px; border-radius: 50%; }
+.echoice:hover { border-color: var(--gold-dim); color: var(--text); }
+.echoice.on { border-color: var(--bad); color: var(--text); background: rgba(255,92,92,.08); }
+.echoice.auto { padding: 3px 10px; color: var(--gold); border-color: var(--gold-dim); }
