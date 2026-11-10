@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld("lolTool", {
   hover: (type, championId) => ipcRenderer.invoke("hover", type, championId),
   chooseRunes: (idx) => ipcRenderer.invoke("choose-runes", idx),
   chooseBuild: (idx) => ipcRenderer.invoke("choose-build", idx),
+  setEnemy: (id) => ipcRenderer.invoke("set-enemy", id),
   onState: (cb) => ipcRenderer.on("state", (_e, s) => cb(s)),
 });

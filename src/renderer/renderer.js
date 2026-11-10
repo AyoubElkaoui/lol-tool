@@ -8,6 +8,19 @@ const splash = (c) => `${DD}/cdn/img/champion/splash/${c.slug}_0.jpg`;
 const icon = (s, c) => (s.champUrl && c ? s.champUrl + c.image : "");
 let buildTab = "team";
 
+// Tegenstander in jouw lane zelf aanklikken als de tool het niet (goed) weet.
+function enemyChooser(s) {
+  const list = s.theirTeam || [];
+  if (!list.length) return "";
+  const cur = s.enemy?.id ?? s.picks?.enemy?.id;
+  const manual = !!s.manualEnemyId;
+  const label = manual ? "zelf gekozen" : cur ? "geschat door de tool · klopt het niet? klik de juiste" : "niet zeker · klik wie in jouw lane staat";
+  return `<div class="chooser"><span class="ilabel">Tegenstander in jouw lane <small>${label}</small></span><div class="echoices">`
+    + list.map((c) => `<button class="echoice ${c.id === cur ? "on" : ""}" data-enemy="${c.id}" title="${esc(c.name)} als tegenstander kiezen"><img src="${icon(s, c)}" alt="" />${esc(c.name)}</button>`).join("")
+    + (manual ? `<button class="echoice auto" data-enemy="0" title="Laat de tool weer zelf kiezen">↺ Automatisch</button>` : "")
+    + "</div></div>";
+}
+
 function renderHero(s) {
   const h = $("#hero");
   if (!s.me) {
@@ -25,7 +38,7 @@ function renderHero(s) {
     <div class="hero-inner">
       <div class="matchup">
         <div class="champ"><img src="${icon(s, s.me)}" alt="" /><div><div class="name">${esc(s.me.name)}</div><div class="lane">${esc(LANE_NL[s.lane] || s.lane || "")}</div></div></div>
-        ${s.enemy ? `<span class="vs">VS</span><div class="champ enemy"><img src="${icon(s, s.enemy)}" alt="" /><div><div class="name">${esc(s.enemy.name)}</div><div class="lane">tegenstander</div></div></div>` : `<span class="wr">${s.enemies.length ? "Nog geen tegenstander in jouw lane gezien" : "Tegenstander nog niet gelockt"}</span>`}
+        ${s.enemy ? `<span class="vs">VS</span><div class="champ enemy"><img src="${icon(s, s.enemy)}" alt="" /><div><div class="name">${esc(s.enemy.name)}</div><div class="lane">tegenstander${s.manualEnemyId ? " · zelf gekozen" : ""}</div></div></div>` : `<span class="wr">${s.enemies.length ? "Nog geen tegenstander in jouw lane gezien" : "Tegenstander nog niet gelockt"}</span>`}
       </div>
       <div class="wrline">
         ${s.guide?.level ? `<span class="badge ${s.guide.level}">${s.guide.level}</span>` : ""}
@@ -77,7 +90,7 @@ function renderPicks(s) {
   const topIdx = p.pool.findIndex((r) => !r.taken && r.wr != null);
   const pool = p.pool.map((r, i) => pickRow(s, r, i === topIdx)).join("");
   if (p.mode === "blind") {
-    el.innerHTML = `<h2>Blind pick <small>${esc(LANE_NL[p.lane] || p.lane)} · nog geen tegenstander · verwachte winrate over alle matchups</small></h2><div class="picklist">${pool}</div>`;
+    el.innerHTML = `<h2>Blind pick <small>${esc(LANE_NL[p.lane] || p.lane)} · nog geen tegenstander · verwachte winrate over alle matchups</small></h2>${enemyChooser(s)}<div class="picklist">${pool}</div>`;
     return;
   }
   const team = p.enemies?.length > 1 || (p.enemies?.length && !p.enemy);
@@ -85,7 +98,7 @@ function renderPicks(s) {
     ? `tegen hun team (${p.enemies.length}/5)${p.enemy ? ` · ${esc(p.enemy.name)} in jouw lane telt dubbel` : ""} · ${esc(LANE_NL[p.lane] || p.lane)}`
     : `tegen ${esc(p.enemy.name)} · ${esc(LANE_NL[p.lane] || p.lane)} · jouw winrate in de matchup`;
   const best = p.enemy ? `<div><div class="ilabel">Beste in deze lane tegen ${esc(p.enemy.name)}</div><div class="picklist">${p.best.map((r) => pickRow(s, r)).join("") || "<span class='wr'>Te weinig data</span>"}</div></div>` : "";
-  el.innerHTML = `<h2>Counter picks <small>${sub}</small></h2>
+  el.innerHTML = `<h2>Counter picks <small>${sub}</small></h2>${enemyChooser(s)}
     <div class="pickcols"><div><div class="ilabel">Jouw pool</div><div class="picklist">${pool}</div></div>${best}</div>`;
 }
 
@@ -118,6 +131,7 @@ function renderTeam(s) {
       ${tm.healers.length ? `<span class="pill"><b>${tm.healers.length}</b> healer</span>` : ""}${tm.cc.length >= 3 ? `<span class="pill"><b>${tm.cc.length}</b> CC</span>` : ""}
       ${s.teamBuild?.boots ? `<span class="pill">Boots: <b>${esc(s.teamBuild.bootsName)}</b> · ${esc(s.teamBuild.boots.why)}</span>` : ""}
     </div>
+    ${enemyChooser(s)}
     ${tm.notes.length ? `<ul class="teamnotes">${tm.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}`;
 }
 
@@ -206,7 +220,7 @@ function render(s) {
   st.querySelector(".txt").textContent = s.client === "verbonden" ? `Verbonden${phase ? " · " + phase : ""} · ${s.profiles?.[s.settings.profile]?.name || ""}` : "Client zoeken…";
   st.className = "status" + (s.client === "verbonden" ? " on" : "");
   for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).value = s.settings[id];
-  for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoAccept", "alwaysOnTop"]) $("#" + id).checked = !!s.settings[id];
+  for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop"]) $("#" + id).checked = !!s.settings[id];
   renderData(s); renderHero(s); renderBans(s); renderPicks(s); renderPostgame(s);
   $("#content").classList.toggle("hidden", !s.me);
   renderTeam(s); renderRunes(s); renderItems(s); renderSpells(s); renderGuide(s);
@@ -214,8 +228,9 @@ function render(s) {
 }
 
 for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.value }));
-for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoAccept", "alwaysOnTop"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.checked }));
+for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.checked }));
 $("#reapply").addEventListener("click", () => api.reapply());
+document.addEventListener("click", (e) => { const el = e.target.closest("[data-enemy]"); if (el) api.setEnemy(Number(el.dataset.enemy)); });
 document.addEventListener("click", (e) => { const el = e.target.closest("[data-hover]"); if (el) api.hover(el.dataset.hover, Number(el.dataset.champ)); });
 $("#toggleSettings").addEventListener("click", (e) => { e.stopPropagation(); $("#settings").classList.toggle("hidden"); });
 document.addEventListener("click", (e) => { if (!e.target.closest("#settings")) $("#settings").classList.add("hidden"); });

@@ -7,7 +7,7 @@
   const idle = {
     client: q.get("mock") === "idle" ? "zoeken" : "verbonden", phase: "Lobby", me: null, enemy: null, enemies: [], runes: null, items: null, guide: null,
     applied: {}, log: ["16:02:11  Verbonden met League-client", "16:02:10  Data Dragon 16.20.1"],
-    settings: { profile: "ayoub", tier: "gold_plus", autoRunes: true, autoItems: true, autoSpells: true, autoHover: true, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d" },
+    settings: { profile: "ayoub", tier: "gold_plus", autoRunes: true, autoItems: true, autoSpells: true, autoHover: true, autoBan: false, autoLock: false, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d" },
     profiles: { ayoub: { name: "Ayoub" }, danny: { name: "Danny" } },
     data: { patch: "16.21", latest: "16.21", games: 190046, tier: "gold_plus" }, myStats: { 39: { wins: 11, games: 24 }, 17: { wins: 1, games: 3 } },
     update: q.get("update") ? { version: "0.1.5", url: "https://github.com/AyoubElkaoui/lol-tool/releases" } : null,
@@ -32,6 +32,7 @@
     enemy: { id: 24, name: "Jax", slug: "Jax", image: "Jax.png" }, enemies: [],
     applied: { runes: "Irelia vs Jax", items: "Irelia vs Jax", spells: "Flash + Ignite" },
     enemies: [{ id: 24, name: "Jax", slug: "Jax", image: "Jax.png" }, { id: 19, name: "Warwick", slug: "Warwick", image: "Warwick.png" }, { id: 238, name: "Zed", slug: "Zed", image: "Zed.png" }, { id: 222, name: "Jinx", slug: "Jinx", image: "Jinx.png" }, { id: 89, name: "Leona", slug: "Leona", image: "Leona.png" }],
+    theirTeam: [{ id: 24, name: "Jax", slug: "Jax", image: "Jax.png" }, { id: 19, name: "Warwick", slug: "Warwick", image: "Warwick.png" }, { id: 238, name: "Zed", slug: "Zed", image: "Zed.png" }, { id: 222, name: "Jinx", slug: "Jinx", image: "Jinx.png" }, { id: 89, name: "Leona", slug: "Leona", image: "Leona.png" }],
     team: { count: 5, ad: ["Jax", "Warwick", "Zed", "Jinx"], ap: [], tanks: ["Leona"], healers: ["Jax", "Warwick", "Jinx"], cc: ["Leona"], notes: ["4 AD-champions → armor (2e/3e item) loont, Steelcaps als boots.", "Veel healing → anti-heal vroeg (Executioner's/Bramble/Oblivion Orb)."] },
     teamBuild: { changed: true, build: [3153, 3047, 3181, 3110, 3091, 6333], boots: { id: 3047, why: "4 AD in hun team" }, bootsName: "Plated Steelcaps", defensive: [3110, 3026, 3053], why: { 3047: "4 AD in hun team", 3110: "4 AD-champions, Jax in jouw lane" } },
     spells: { ids: [4, 14], names: ["Flash", "Ignite"], imgs: [`https://ddragon.leagueoflegends.com/cdn/${V}/img/spell/SummonerFlash.png`, `https://ddragon.leagueoflegends.com/cdn/${V}/img/spell/SummonerDot.png`] },
@@ -79,6 +80,7 @@
     reapply: async () => true,
     hover: async (type, id) => { console.log("hover", type, id); return true; },
     chooseRunes: async (idx) => { state = { ...state, runeIdx: idx }; subs.forEach((f) => f(state)); return true; },
+    setEnemy: async (id) => { state = { ...state, manualEnemyId: id, enemy: (state.theirTeam || []).find((c) => c.id === id) || state.enemy }; subs.forEach((f) => f(state)); return true; },
     chooseBuild: async (idx) => { state = { ...state, items: { ...state.items, buildIdx: idx } }; subs.forEach((f) => f(state)); return true; },
     onState: (f) => subs.push(f),
   };
