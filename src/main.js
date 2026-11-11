@@ -45,6 +45,7 @@ let manualEnemyId = 0;
 const LOCK_AT_MS = 8000;
 // Handmatige keuze in de app (klik op een rune page of build); null = standaard uit de instellingen.
 // runeKey = label van de gekozen page, zodat de keuze blijft staan als de lijst verandert.
+let lastStyleKey = "";
 let runeKey = null, buildIdx = null, baseItems = null, baseRunes = null;
 const activeRuneIdx = (pages) => {
   const chosen = runeKey ? pages.findIndex((p) => p.label === runeKey) : -1;
@@ -239,7 +240,8 @@ async function processPick(session, champs, patch) {
   const lane = LANE[meRow.assignedPosition] || PROFILES[settings.profile].lane;
   const locked = meRow.championId > 0;
   const enemyIds = (session.theirTeam || []).map((p) => p.championId || p.championPickIntent || 0).filter((x) => x > 0);
-  const key = `${myChampId}|${lane}|${locked}|${enemyIds.slice().sort().join(",")}|${manualEnemyId}`;
+  const allyIds = (session.myTeam || []).filter((p) => p.cellId !== myCell).map((p) => p.championId || p.championPickIntent || 0).filter((x) => x > 0);
+  const key = `${myChampId}|${lane}|${locked}|${enemyIds.slice().sort().join(",")}|${manualEnemyId}|${allyIds.slice().sort().join(",")}`;
   if (key === lastKey || busy) return;
   busy = true; lastKey = key;
   try {
@@ -272,7 +274,14 @@ async function processPick(session, champs, patch) {
       catch (e) { u = null; log("u.gg (spells/skills) niet beschikbaar: " + e.message); }
       items.starters = u?.starters?.length ? u.starters : fallbackStarters(me, lane);
       items.core = fillBuild(items.core, u?.itemOptions);
-      items.builds = (items.builds || []).map((b) => ({ ...b, items: fillBuild(b.items, u?.itemOptions) }));
+      items.builds = (items.builds || []).slice(0, 3).map((b) => ({ ...b, items: fillBuild(b.items, u?.itemOptions) }));
+      // Speelstijlen uit de data (full damage / tank) als extra klikbare builds.
+      items.styles = an.styles({ builds: items.allBuilds, itemData });
+      for (const st of Object.values(items.styles)) {
+        st.items = fillBuild(st.items, u?.itemOptions);
+        const at = items.builds.findIndex((b) => b.items.slice(0, 3).join() === st.items.slice(0, 3).join());
+        if (at >= 0) { items.builds[at].label = st.label; st.idx = at; } else { st.idx = items.builds.length; items.builds.push({ items: st.items, picks: st.picks, wins: st.wins, wr: st.wr, label: st.label }); }
+      }
       const up = await uggPage(u).catch(() => null);
       if (up && !runes.pages.some((p) => samePage(p, up))) runes.pages.push(up);
       baseRunes = runes;
@@ -303,8 +312,18 @@ async function processPick(session, champs, patch) {
     state.spells = u ? { ids: spellIds, names: spellIds.map((id) => ugg.SPELL_NAMES[id] || id), imgs: spellIds.map((id) => `${urls.champion("").replace("/champion/", "/spell/")}${ugg.SPELL_IMG[id] || ""}.png`) } : null;
 
     // Build tegen jouw tegenstander in plaats van de algemene (tenzij je zelf een build koos).
+    // Past een andere speelstijl bij de teams (squishy tegenstanders → full damage, geen eigen
+    // frontline → tank), dan gaat die voor de matchup-build.
     let vsOptions = null;
-    if (state.enemy && buildIdx == null) {
+    const style = buildIdx == null ? an.pickStyle({ styles: items.styles, team: state.team, allies: allyIds.map((id) => champs[id]) }) : null;
+    const styleKey = style ? `${style.key}|${me.id}` : "";
+    if (style) {
+      const b = style.items;
+      items = { ...items, core: [b[0], ...(items.boot ? [items.boot] : []), ...b.slice(1)], situational: items.situational.filter((id) => !b.includes(id)), style: { key: style.key, label: style.label, why: style.why, picks: style.picks, wr: style.wr, idx: style.idx } };
+      if (styleKey !== lastStyleKey) log(`${style.label}-build: ${style.why} (${style.picks} games, ${style.wr}%)`);
+    }
+    lastStyleKey = styleKey;
+    if (state.enemy && buildIdx == null && !style) {
       try {
         const mb = matchupBuild(await lol.vsItems({ ...opts, vs: state.enemy.lolaSlug }));
         if (mb) {
@@ -324,10 +343,10 @@ async function processPick(session, champs, patch) {
     }
 
     // Matchup-laag: team-build, guide, situationele items (verandert als tegenstanders bijkomen).
-    const tb = an.teamBuild({ me, core: items.core, situational: items.situational, options: vsOptions || u?.itemOptions, itemData, team: state.team, laner: state.enemy, defaultBoot: items.boot, isBoot });
+    const tb = an.teamBuild({ me, core: items.core, situational: items.situational, options: vsOptions || u?.itemOptions, itemData, team: state.team, laner: state.enemy, defaultBoot: items.boot, isBoot, style: items.style?.key });
     state.teamBuild = { ...tb, bootsName: itemNames[tb.boots.id] };
     state.guide = guide.build({ me, enemy: state.enemy, counterRow: laner?.row || null, runePage: runes.pages[activeRuneIdx(runes.pages)], itemBuild: items, itemNames, itemData, team: state.team, teamBuild: state.teamBuild, spells: state.spells, skills: state.skills });
-    state.items = { ...items, situational: state.guide.situationalIds || items.situational, names: itemNames, gold: itemGold, itemUrl: urls.item("").replace(/\.png$/, ""), options: vsOptions || u?.itemOptions || null, buildIdx: pickedBuild ? buildIdx : null };
+    state.items = { ...items, allBuilds: undefined, styles: undefined, situational: state.guide.situationalIds || items.situational, names: itemNames, gold: itemGold, itemUrl: urls.item("").replace(/\.png$/, ""), options: vsOptions || u?.itemOptions || null, buildIdx: pickedBuild ? buildIdx : null };
     state.runeIdx = activeRuneIdx(runes.pages);
     push();
 

@@ -47,7 +47,7 @@ function rankSituational(ids, itemData, enemy) {
     if (!it) return 0;
     let s = 0;
     for (const t of it.tags) if (want.has(t)) s += 2;
-    if (want.has("GrievousWounds") && /Thornmail|Bramble|Executioner|Mortal Reminder|Chempunk|Morellonomicon|Oblivion/i.test(it.name)) s += 3;
+    if (want.has("GrievousWounds") && it.gw) s += 3;
     return s;
   };
   return [...ids].sort((a, b) => score(b) - score(a));

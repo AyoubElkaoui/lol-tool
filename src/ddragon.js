@@ -73,11 +73,12 @@ function lolalyticsSlug(champ) {
 async function items() {
   if (mem.items) return mem.items;
   const v = await version();
-  const data = await cached(`items-${v}.json`, async () => {
+  const data = await cached(`items2-${v}.json`, async () => {
     const d = await fetchJson(`${BASE}/cdn/${v}/data/en_US/item.json`);
     const out = {};
     for (const [id, it] of Object.entries(d.data)) {
-      out[id] = { id: Number(id), name: it.name, image: it.image.full, gold: it.gold?.total ?? 0, tags: it.tags || [] };
+      const text = String(it.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+      out[id] = { id: Number(id), name: it.name, image: it.image.full, gold: it.gold?.total ?? 0, tags: it.tags || [], gw: /Grievous Wounds/i.test(text), pctPen: /\d+%\s*(Magic|Armor) Penetration/i.test(text) };
     }
     return out;
   });

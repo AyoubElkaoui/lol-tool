@@ -85,10 +85,11 @@ async function itemBuild(opts, isBoot) {
   const boot = [...bootPicks.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
   // Builds om uit te kiezen: de populairste eerste-3-items, elk doorgetrokken naar 5 items.
-  const starts = sets[3].filter((r) => r.picks >= MIN_STEP).slice(0, 8);
-  const builds = (starts.length ? starts : sets[2].slice(0, 4))
+  const starts = sets[3].filter((r) => r.picks >= MIN_STEP).slice(0, 40);
+  const allBuilds = (starts.length ? starts : sets[2].slice(0, 4))
     .map((r) => ({ items: extend(r.items, sets, r.items.length + 1), picks: r.picks, wins: r.wins, wr: wr(r) }))
     .filter((b, i, a) => a.findIndex((x) => JSON.stringify(x.items) === JSON.stringify(b.items)) === i);
+  const builds = allBuilds.slice(0, 8);
   const main = builds[0]?.items || extend([sets[1][0].items[0]], sets, 2);
   const core = [main[0], ...(boot ? [boot] : []), ...main.slice(1)];
 
@@ -97,7 +98,7 @@ async function itemBuild(opts, isBoot) {
   for (const n of [4, 5]) for (const r of sets[n]) for (const id of r.items) if (!isBoot(id) && !main.includes(id)) freq.set(id, (freq.get(id) || 0) + r.picks);
   for (const r of sets[1]) if (!main.includes(r.items[0])) freq.set(r.items[0], (freq.get(r.items[0]) || 0) + r.picks / 10); // andere eerste items
   const situational = [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id).slice(0, 6);
-  return { starters: [], boot, core, situational, builds };
+  return { starters: [], boot, core, situational, builds, allBuilds };
 }
 
 // Data tegen één tegenstander. De JSON-endpoint negeert vs=, maar de vs-pagina van de site

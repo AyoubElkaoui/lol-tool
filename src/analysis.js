@@ -72,18 +72,54 @@ function myClass(me, core = [], itemData = {}) {
   return "fighter";
 }
 
-// Per dreiging en klasse: items in volgorde van voorkeur. Items die in de data van jouw
-// champ voorkomen krijgen voorrang (die bouwt jouw champ echt).
-const COUNTER_ITEMS = {
-  // Mage-lijsten bevatten ook tank-items voor AP-tanks (Galio, Amumu): die worden alleen gekozen
-  // als de champ ze in de data echt bouwt (zie rank in teamBuild).
-  armor: { fighter: [6333, 3143, 3742], assassin: [6333, 3026], marksman: [3026, 6333], mage: [3157, 3075, 3110], tank: [3075, 3143, 3110] },
-  mr: { fighter: [3156, 3091, 3065], assassin: [3156, 3814], marksman: [3139, 3156, 3091], mage: [3102, 2504, 6664, 4401], tank: [4401, 2504, 3065] },
-  antiheal: { fighter: [6609, 3123], assassin: [6609, 3123], marksman: [3033, 3123], mage: [3165, 3916], tank: [3075, 3076] },
-  tanks: { fighter: [3071, 3153], assassin: [6694, 3071], marksman: [3036, 3153], mage: [3135, 6653], tank: [3075] },
-  burst: { fighter: [3053, 6333], assassin: [3814, 3026], marksman: [3026, 6673], mage: [3157, 3102], tank: [6665, 3143] },
-  cc: { fighter: [3053, 3091], assassin: [3814], marksman: [3139], mage: [3102], tank: [6665] },
+// Welke items een dreiging oplossen komt uit de data: de items die jouw champ zelf bouwt
+// (lolalytics, per patch) met de juiste eigenschap volgens Riot's item-data. Geen vaste item-lijstjes.
+const THREAT_MATCH = {
+  armor: (it) => it.tags.includes("Armor"),
+  mr: (it) => it.tags.includes("SpellBlock"),
+  antiheal: (it) => !!it.gw,
+  tanks: (it) => !!it.pctPen,
+  burst: (it) => it.tags.includes("Armor") && it.tags.includes("Active"), // Zhonya's e.d.
+  cc: (it) => it.tags.includes("Tenacity"),
 };
+
+// Speelstijlen uit de data: de meest gebouwde "full damage"- en "tank"-build van deze champ.
+// Een item telt als tank-item als het volgens Riot geen damage-stats heeft maar wel health/armor/MR.
+const DMG_TAGS = ["SpellDamage", "Damage", "CriticalStrike", "AttackSpeed"];
+const DEF_TAGS = ["Health", "Armor", "SpellBlock"];
+const isTankItem = (it) => !!it && !it.tags.some((t) => DMG_TAGS.includes(t)) && it.tags.some((t) => DEF_TAGS.includes(t));
+// damage = hooguit één item met wat defensie erbij (Zhonya's), tank = minstens twee pure tank-items.
+function styleOf(ids, itemData) {
+  const first = ids.slice(0, 3).map((id) => itemData[id]);
+  const tank = first.filter(isTankItem).length;
+  const hybrid = first.filter((it) => it && !isTankItem(it) && it.tags.some((t) => DEF_TAGS.includes(t))).length;
+  return tank >= 2 ? "tank" : tank === 0 && hybrid <= 1 ? "damage" : "mixed";
+}
+const STYLE_LABEL = { damage: "Full damage", tank: "Tank" };
+function styles({ builds, itemData }) {
+  const list = (builds || []).filter((b) => b.items.length >= 3 && b.items.every((id) => itemData[id]));
+  const total = list.reduce((s, b) => s + b.picks, 0) || 1;
+  const std = list[0] ? styleOf(list[0].items, itemData) : null;
+  const out = {};
+  for (const key of ["damage", "tank"]) {
+    if (key === std) continue; // de standaard-build ís al deze stijl
+    const group = list.filter((b) => styleOf(b.items, itemData) === key);
+    const picks = group.reduce((s, b) => s + b.picks, 0);
+    const top = group[0]; // builds staan op aantal games
+    if (!top || top.picks < 50 || picks / total < 0.02) continue;
+    out[key] = { ...top, key, label: STYLE_LABEL[key], share: Math.round((picks / total) * 100) };
+  }
+  return out;
+}
+
+// Wanneer een andere stijl dan de standaard beter past: jullie hebben geen frontline → tank,
+// hun team heeft geen tank → full damage. Alleen als de champ die stijl echt speelt (zie styles).
+function pickStyle({ styles: st, team, allies }) {
+  const mates = (allies || []).filter(Boolean);
+  if (st?.tank && mates.length >= 4 && !mates.some((c) => c.tags?.includes("Tank"))) return { ...st.tank, why: "jullie team heeft geen frontline" };
+  if (st?.damage && team.count >= 4 && team.tanks.length === 0) return { ...st.damage, why: "hun team is squishy (geen tank)" };
+  return null;
+}
 
 // Wat dit team gevaarlijk maakt, met een gewicht (hoe hoger, hoe eerder het item).
 function threats(team, laner) {
@@ -101,23 +137,24 @@ function threats(team, laner) {
 
 // "vs dit team"-build: 1e en 2e core-item blijven, boots en de items daarna worden
 // gekozen op wat dit team gevaarlijk maakt (max. 2 counter-items, per dreiging het beste).
-function teamBuild({ me, core, situational, options, itemData, team, laner, defaultBoot, isBoot }) {
+function teamBuild({ me, core, situational, options, itemData, team, laner, defaultBoot, isBoot, style }) {
   const cls = myClass(me, core, itemData);
   const boots = chooseBoots({ me, team, laner, defaultBoot, cls });
   // Hoe vaker jouw champ een item koopt, hoe lager de rank: core, dan situationeel, dan u.gg-opties.
   const order = [...core, ...situational, ...[4, 5, 6].flatMap((k) => [...(options?.[k] || [])].sort((a, b) => b.games - a.games).map((o) => o.id))];
-  const rank = (id) => { const i = order.indexOf(id); return i < 0 ? Infinity : i; };
   const coreNoBoots = core.filter((id) => !isBoot(id));
   const picked = [];
   for (const t of threats(team, laner)) {
-    const ids = (COUNTER_ITEMS[t.key][cls] || []).filter((id) => itemData[id]);
+    // Kandidaten: wat jouw champ echt bouwt (order), met de eigenschap die deze dreiging oplost.
+    // In een full damage-build komen geen pure tank-items.
+    const ids = [...new Set(order)].filter((id) => itemData[id] && !isBoot(id) && THREAT_MATCH[t.key](itemData[id]) && !(style === "damage" && isTankItem(itemData[id])));
     const already = ids.find((id) => coreNoBoots.slice(0, 3).includes(id) || picked.some((p) => p.id === id));
     if (already) {
       const p = picked.find((x) => x.id === already);
       if (p) p.why += ` en ${t.why}`; else picked.push({ id: already, why: t.why, key: t.key, inCore: true });
       continue;
     }
-    const id = [...ids].sort((a, b) => rank(a) - rank(b))[0];
+    const id = ids[0];
     if (id) picked.push({ id, why: t.why, key: t.key });
   }
   const counters = picked.filter((p) => !p.inCore).slice(0, 2);
@@ -148,4 +185,4 @@ function banAdvice({ poolCounters, lane, taken, champs, enemyHovers }) {
   return { list, hovers };
 }
 
-module.exports = { myClass, threats, analyseTeam, chooseBoots, teamBuild, banAdvice, dmgType, BOOTS };
+module.exports = { styles, styleOf, pickStyle, myClass, threats, analyseTeam, chooseBoots, teamBuild, banAdvice, dmgType, BOOTS };

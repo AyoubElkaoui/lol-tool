@@ -52,7 +52,7 @@ async function applyItemSets(lcu, { championId, champName, build, teamBuild, vsN
       block("Defensief als het misgaat", teamBuild.defensive),
     ], 2));
   }
-  sets.push(mk(build.vs ? `${champName} vs ${build.vs.name}` : `${champName} standaard`, [
+  sets.push(mk(build.style ? `${champName} ${build.style.label.toLowerCase()}` : build.vs ? `${champName} vs ${build.vs.name}` : `${champName} standaard`, [
     block("Start", build.starters),
     block("Eerste 3 items", build.core.slice(0, 3)),
     block("Volledige build", build.core),
