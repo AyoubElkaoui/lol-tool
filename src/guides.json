@@ -183,5 +183,41 @@
         "Steel zijn camps; hij heeft ze nodig om te schalen."
       ]
     }
+  },
+  "gangplank": {
+    "algemeen": [
+      "Lane: last-hit met Q (parrrley) voor extra goud; trade alleen met Q als zijn ability net weg is.",
+      "Barrels: zet er één in de wave en Q hem zodra hij op 1 leven staat (na 2 ticks); eerst in Practice Tool oefenen.",
+      "W haalt CC weg en healt: bewaar hem voor stuns/roots, niet voor een beetje leven.",
+      "R (Cannon Barrage) werkt over de hele map: help bot en drakes vanuit top, upgrade eerst Death's Daughter.",
+      "Je wint laat: tot 2 items rustig farmen, niet all-in gaan tegen melee bruisers."
+    ],
+    "fallback": [
+      "Farm met Q, speel veilig tot 2 items en help de map met R."
+    ]
+  },
+  "tahmkench": {
+    "algemeen": [
+      "Lane: Q-auto-passive stapelen; met 3 stacks kun je hem met W opeten (devour) of je passive laten exploderen.",
+      "Je bent sterk vroeg: trade op level 2-3, vooral tegen melee champs die naar je toe moeten.",
+      "E (grijs leven) laat je veel damage overleven: ga pas weg als je grijze leven op is.",
+      "R (devour) op een teamgenoot = redden; op een vijand met 3 stacks = hem meeslepen naar je team.",
+      "Teamfight: jij bent de frontline; bescherm je carry, ren niet alleen de achterlinie in."
+    ],
+    "fallback": [
+      "Trade vroeg met Q en passive-stacks, bouw tank, red je carry met R."
+    ]
+  },
+  "illaoi": {
+    "algemeen": [
+      "Alles draait om tentakels: vecht bij je tentakels, niet in open terrein waar ze niet staan.",
+      "E (Test of Spirit) is je belangrijkste skill: raak je hem, vecht dan bij zijn geest; mis je, speel dan veilig.",
+      "R in een gevecht met meerdere vijanden = veel tentakels; tegen 1 vijand liever na een geraakte E.",
+      "W springt naar je doel en laat tentakels slaan: gebruik hem om op hem te blijven zitten.",
+      "Ranged tops (Teemo/Vayne/Quinn) zijn lastig: farm onder tower en wacht op je jungler."
+    ],
+    "fallback": [
+      "Vecht bij je tentakels, raak eerst E en gebruik R alleen in een echt gevecht."
+    ]
   }
 }

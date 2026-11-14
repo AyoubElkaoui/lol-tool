@@ -18,9 +18,10 @@ const lcu = new LcuClient();
 let win = null;
 
 const PROFILES = {
-  ayoub: { name: "Ayoub", lane: "middle", pool: ["galio", "ekko", "sylas"] },
   // teamPick: score tegen het hele vijandelijke team; favorite: bij twijfel deze champ.
-  danny: { name: "Danny", lane: "jungle", pool: ["rengar", "khazix", "nidalee"], pools: { top: ["gangplank", "kled", "aatrox"] }, favorite: "rengar", teamPick: true },
+  // Ayoub speelt alleen Rengar; is die weg, dan hovert/lockt de tool de beste counter pick.
+  ayoub: { name: "Ayoub", lane: "jungle", pool: ["rengar"], favorite: "rengar", teamPick: true },
+  danny: { name: "Danny", lane: "top", pool: ["gangplank", "tahmkench", "illaoi"], favorite: "gangplank" },
 };
 
 // Pool voor de lane die je in champ select krijgt; anders de standaard-pool van het profiel.
@@ -391,7 +392,7 @@ async function autoHoverPick(session, champs) {
   const meRow = (session.myTeam || []).find((p) => p.cellId === session.localPlayerCellId);
   const current = action.championId || meRow?.championPickIntent || 0;
   if (current && current !== autoPickId) return; // eigen keuze gaat altijd voor
-  const best = state.picks.pool.find((r) => !r.taken && r.wr != null);
+  const best = bestPickRow();
   if (!best || best.champ.id === current) return;
   const why = state.picks.enemy ? `tegen ${state.picks.enemy.name}` : "blind pick";
   if (await tryHover(action, best.champ.id, `Gehoverd: ${best.champ.name} (${why}, ${best.wr}%)`)) autoPickId = best.champ.id;
@@ -413,11 +414,35 @@ function bestBan(session) {
   const allies = new Set((session.myTeam || []).map((p) => p.championPickIntent || p.championId).filter(Boolean));
   return state.bans?.list?.find((x) => !allies.has(x.cid) && !state.bans.pool.includes(x.champ?.lolaSlug))?.cid || 0;
 }
-const bestPick = () => state.picks?.pool?.find((r) => !r.taken && r.wr != null)?.champ.id || 0;
+// Beste vrije champ uit de pool; is de hele pool weg (gebanned/gepakt), dan de beste counter pick.
+function bestPickRow() {
+  const p = state.picks;
+  if (!p) return null;
+  return p.pool?.find((r) => !r.taken && r.wr != null) || p.pool?.find((r) => !r.taken) || p.best?.find((r) => r.wr != null) || null;
+}
+const bestPick = () => bestPickRow()?.champ.id || 0;
+
+// adjustedTimeLeftInPhase is de resttijd op het moment internalNowInEpochMs; de client werkt
+// dat getal alleen bij als er iets in champ select verandert. Zelf de verstreken tijd aftrekken,
+// anders zakt hij nooit onder LOCK_AT_MS als niemand meer iets doet.
+function timeLeft(timer) {
+  const left = timer?.adjustedTimeLeftInPhase;
+  if (!Number.isFinite(left) || timer.isInfinite) return Infinity;
+  const at = Number(timer.internalNowInEpochMs);
+  return Number.isFinite(at) && at > 0 ? left - Math.max(0, Date.now() - at) : left;
+}
+
+// Lock/ban: eerst de champ zetten, dan de actie afronden. Oudere clients doen dat in één PATCH
+// met completed: true; nieuwere negeren completed en willen POST .../complete.
+async function completeAction(action, championId) {
+  const url = `/lol-champ-select/v1/session/actions/${action.id}`;
+  if (action.championId !== championId) await lcu.patch(url, { championId });
+  try { await lcu.post(`${url}/complete`); }
+  catch { await lcu.patch(url, { championId, completed: true }); }
+}
 
 async function autoLock(session, champs) {
-  const left = session.timer?.adjustedTimeLeftInPhase;
-  if (!Number.isFinite(left) || left > LOCK_AT_MS) return;
+  if (timeLeft(session.timer) > LOCK_AT_MS) return;
   for (const type of ["ban", "pick"]) {
     if (!(type === "ban" ? settings.autoBan : settings.autoLock)) continue;
     const action = myAction(session, type);
@@ -429,7 +454,7 @@ async function autoLock(session, champs) {
     lockTried = attempt;
     const name = champs[championId]?.name || championId;
     try {
-      await lcu.patch(`/lol-champ-select/v1/session/actions/${action.id}`, { championId, completed: true });
+      await completeAction(action, championId);
       log(type === "ban" ? `Automatisch gebanned: ${name}` : `Automatisch gelockt: ${name}`);
     } catch (e) { log(`${type === "ban" ? "Bannen" : "Locken"} mislukt (${name}): ${e.message}`); }
   }
@@ -452,8 +477,18 @@ async function processChampSelect(session) {
   await processCounterPicks(session, champs, patch);
   await autoHoverBan(session);
   await autoHoverPick(session, champs);
-  await autoLock(session, champs);
   await processPick(session, champs, patch);
+}
+
+// Bannen/locken in een eigen, snelle lus: de gewone tick wacht soms seconden op lolalytics
+// en mist dan de laatste 8 seconden van je beurt.
+let lockBusy = false;
+async function lockTick() {
+  if (lockBusy || !lcu.connected || state.phase !== "ChampSelect" || !(settings.autoBan || settings.autoLock)) return;
+  lockBusy = true;
+  try { const s = await lcu.champSelect(); if (s) await autoLock(s, await dd.champions()); }
+  catch (e) { log("auto ban/lock: " + e.message); }
+  finally { lockBusy = false; }
 }
 
 // ---------- post-game ----------
@@ -566,6 +601,7 @@ app.whenReady().then(async () => {
   try { log("Data Dragon " + (await dd.version())); await refreshData(); push(); } catch (e) { log("Data niet bereikbaar: " + e.message); }
   checkUpdate();
   setInterval(() => tick().catch((e) => log("tick: " + e.message)), 1500);
+  setInterval(() => lockTick(), 500);
   setInterval(() => refreshData().then(push).catch(() => {}), 60 * 60 * 1000);
   setInterval(checkUpdate, 6 * 60 * 60 * 1000);
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
