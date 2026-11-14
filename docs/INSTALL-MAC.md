@@ -31,7 +31,7 @@ codesign --force --deep -s - "/Applications/LoL Tool.app"
 
 ## 4. Instellen (één keer)
 1. Klik in LoL Tool rechtsboven op **⚙**.
-2. **Profiel**: kies **Danny (jungle: Rengar / Kha'Zix / Nidalee)**.
+2. **Profiel**: kies **Danny (jungle: Rengar / Kha'Zix / Nidalee · top: Gangplank / Kled / Aatrox)**.
 3. **Data van tier**: kies je eigen elo (Gold en hoger is een goede standaard).
 4. Laat "Runes automatisch zetten", "Item sets automatisch zetten" en "Beste ban en pick automatisch hoveren" aan.
    Zet "Summoner spells automatisch zetten" aan als je dat wilt; kies bij **Flash op** D of F.

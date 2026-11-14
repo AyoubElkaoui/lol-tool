@@ -16,7 +16,7 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 ## Wat de tool doet
 - **Ban-fase:** top-5 bans voor jouw pool in jouw lane (waar je pool het slechtst tegen scoort) + wat de tegenstanders hoveren.
 - **Pick-fase (hoveren is genoeg):** runes (page "LoLTool …" actief), summoner spells, twee item sets ("standaard" en "vs team"), skill order, matchup-guide met winrate-badge.
-- **Danny (jungle):** pool Rengar / Kha'Zix / Nidalee. Zodra er tegenstanders bekend zijn scoort de tool elke champ tegen het hele vijandelijke team (de vijandelijke jungler telt dubbel); scheelt het minder dan 1% met de beste, of is er geen data, dan wordt het Rengar.
+- **Danny (jungle):** pool Rengar / Kha'Zix / Nidalee; krijgt hij top, dan Gangplank / Kled / Aatrox. Zodra er tegenstanders bekend zijn scoort de tool elke champ tegen het hele vijandelijke team (de vijandelijke jungler telt dubbel); scheelt het minder dan 1% met de beste, of is er geen data, dan wordt het Rengar.
 - **Runes en builds wisselen:** klik op een andere rune page of build; die wordt meteen in de client gezet. Rune-opties: **runes tegen je tegenstander** (uit de lolalytics-matchuppagina; bij Danny tegen de vijandelijke jungler, standaard actief zodra hij bekend is, vanaf 200 games), meest gespeeld, hoogste winrate en u.gg (dubbele weg), plus een "vs dit team"-page (Tenacity bij veel CC, Health bij veel burst).
 - **Build tegen je tegenstander:** zodra de tegenstander in jouw lane bekend is (bij Danny de vijandelijke jungler) komt de build uit de lolalytics-matchuppagina: item 1-3 wat tegen hem het meest gekocht wordt, item 4-6 de optie met de beste winrate (gecorrigeerd voor weinig games). Onder 200 games: de algemene build.
 - **Tegenstander zelf kiezen:** klopt de geschatte tegenstander niet, klik dan in "Counter picks" of "Hun team" op de juiste champ; runes, items en guide gaan mee. "↺ Automatisch" laat de tool weer zelf kiezen.
@@ -30,7 +30,7 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 - **Update-melding:** staat er een nieuwe versie op GitHub, dan verschijnt bovenin een downloadlink.
 - **Hun team:** AD/AP/tank/healer-telling, boots-keuze met reden, defensief item als het nodig is, anti-heal-advies. Werkt live bij als tegenstanders bijkomen.
 - **Na de game:** KDA, CS/min, vision en 1-2 concrete werkpunten.
-- **Instellingen:** profiel (Ayoub mid: Galio, Ekko, Sylas / Danny jungle: Rengar, Kha'Zix, Nidalee), tier, rune-keuze, auto runes/items/spells, automatisch bannen/locken, ready check auto-accepteren, venster altijd bovenaan.
+- **Instellingen:** profiel (Ayoub mid: Galio, Ekko, Sylas / Danny jungle: Rengar, Kha'Zix, Nidalee · top: Gangplank, Kled, Aatrox), tier, rune-keuze, auto runes/items/spells, automatisch bannen/locken, ready check auto-accepteren, venster altijd bovenaan.
 
 ## Hoe het werkt
 - Leest de League-client via de lokale LCU-API (lockfile), niets wordt in de Riot-mappen geschreven.
