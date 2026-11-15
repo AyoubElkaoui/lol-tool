@@ -191,3 +191,15 @@ main { padding: 18px; max-width: 1140px; width: 100%; margin: 0 auto; display: g
 .echoice:hover { border-color: var(--gold-dim); color: var(--text); }
 .echoice.on { border-color: var(--bad); color: var(--text); background: rgba(255,92,92,.08); }
 .echoice.auto { padding: 3px 10px; color: var(--gold); border-color: var(--gold-dim); }
+/* Doelen: deaths / KP / control wards / CS per min */
+.pg .stat.goal { min-width: 92px; padding: 8px 10px; border: 1px solid rgba(143,163,191,.18); border-radius: 6px; }
+.pg .stat.goal small { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
+.pg .stat.goal.good { border-color: rgba(61,214,140,.45); } .pg .stat.goal.good b { color: var(--good); }
+.pg .stat.goal.bad { border-color: rgba(255,92,92,.45); } .pg .stat.goal.bad b { color: var(--bad); }
+.recent { margin-top: 12px; font-size: 12px; }
+.recent summary { cursor: pointer; color: var(--gold); }
+.recent table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.recent th, .recent td { text-align: left; padding: 4px 6px; border-bottom: 1px solid rgba(143,163,191,.12); }
+.recent th { color: var(--muted); font-weight: 600; font-size: 11px; }
+.recent td.good { color: var(--good); } .recent td.bad { color: var(--bad); }
+.recent tr.w td:first-child { color: var(--good); font-weight: 700; } .recent tr.l td:first-child { color: var(--bad); font-weight: 700; }

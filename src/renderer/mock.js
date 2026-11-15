@@ -10,6 +10,7 @@
     settings: { profile: "ayoub", tier: "gold_plus", autoRunes: true, autoItems: true, autoSpells: true, autoHover: true, autoBan: false, autoLock: false, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d" },
     profiles: { ayoub: { name: "Ayoub" }, danny: { name: "Danny" } },
     data: { patch: "16.21", latest: "16.21", games: 190046, tier: "gold_plus" }, myStats: { 39: { wins: 11, games: 24 }, 17: { wins: 1, games: 3 } },
+    goals: { avg: { games: 20, deaths: 6.6, kp: 44, cw: 0.2, csm: 6.3 }, recent: [{ win: true, champ: "Rengar", kda: "17/2/4", deaths: 2, kp: 66, cw: 1, csm: 6.7 }, { win: false, champ: "Rengar", kda: "8/3/5", deaths: 3, kp: 72, cw: 0, csm: 6.5 }, { win: false, champ: "Rengar", kda: "4/9/3", deaths: 9, kp: 38, cw: 0, csm: 5.4 }] },
     update: q.get("update") ? { version: "0.1.5", url: "https://github.com/AyoubElkaoui/lol-tool/releases" } : null,
   };
   const perk = (id, name, icon, style) => [id, { name, icon, style }];
@@ -61,7 +62,7 @@
       { cid: 54, champ: { id: 54, name: "Malphite", slug: "Malphite", image: "Malphite.png" }, parts: ["irelia: 44.2%", "teemo: 47.0%", "jax: 46.1%"] },
       { cid: 875, champ: { id: 875, name: "Sett", slug: "Sett", image: "Sett.png" }, parts: ["irelia: 46.2%", "teemo: 49.0%", "jax: 47.5%"] },
       { cid: 23, champ: { id: 23, name: "Tryndamere", slug: "Tryndamere", image: "Tryndamere.png" }, parts: ["irelia: 48.0%", "teemo: 45.1%", "jax: 48.9%"] },
-    ], hovers: [{ id: 122, name: "Darius", slug: "Darius", image: "Darius.png" }] }, postgame: { champ: "Irelia", win: true, kda: "7/3/5", cs: 186, csm: "6.2", mins: 30, vision: 18, tips: ["Nette stats. Werkpunt blijft: games afsluiten als je voor staat (Baron/torens, geen chases)."] } };
+    ], hovers: [{ id: 122, name: "Darius", slug: "Darius", image: "Darius.png" }] }, postgame: { champ: "Irelia", win: true, kda: "7/3/5", cs: 186, csm: "6.2", mins: 30, vision: 18, deaths: 3, kp: 61, cw: 0, tips: ["Nette stats. Werkpunt blijft: games afsluiten als je voor staat (Baron/torens, geen chases)."] } };
   const ch = (id, name) => ({ id, name, slug: name, image: name + ".png" });
   const counter = { ...full, locked: false, applied: {}, picks: { mode: "counter", lane: "top", enemy: full.enemy,
     pool: [{ champ: ch(17, "Teemo"), wr: 54.49, n: 2639 }, { champ: ch(39, "Irelia"), wr: 44.67, n: 1549 }, { champ: ch(24, "Jax"), taken: true }],

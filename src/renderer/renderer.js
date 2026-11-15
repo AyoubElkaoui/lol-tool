@@ -208,10 +208,43 @@ function renderPostgame(s) {
   p.classList.toggle("hidden", !show);
   if (!show) return;
   const g = s.postgame;
+  const T = s.goals?.targets || GOAL_TARGETS;
   p.innerHTML = `<h2>Vorige game <small>${esc(g.champ || "")}</small></h2>
     <div class="pg"><span class="${g.win ? "win" : "loss"}">${g.win ? "WIN" : "LOSS"}</span>
-      <div class="stat"><b>${esc(g.kda)}</b><span>KDA</span></div><div class="stat"><b>${g.csm}</b><span>CS/min</span></div><div class="stat"><b>${g.cs}</b><span>CS</span></div><div class="stat"><b>${g.vision}</b><span>Vision</span></div><div class="stat"><b>${g.mins}</b><span>min</span></div></div>
+      <div class="stat"><b>${esc(g.kda)}</b><span>KDA</span></div>
+      ${GOAL_KEYS.map((k) => goalStat(k, g[k], T)).join("")}
+      <div class="stat"><b>${g.vision}</b><span>Vision</span></div><div class="stat"><b>${g.mins}</b><span>min</span></div></div>
     <ul class="pgtips">${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
+}
+
+// Werkpunten: deaths, KP, control wards, CS/min. Groen = doel gehaald, rood = eronder.
+const GOAL_KEYS = ["deaths", "kp", "cw", "csm"];
+const GOAL_TARGETS = {
+  deaths: { max: 5, label: "Deaths", unit: "", hint: "onder 5" },
+  kp: { min: 55, label: "Kill participation", unit: "%", hint: "55%+" },
+  cw: { min: 1, label: "Control wards", unit: "", hint: "1+ per game" },
+  csm: { min: 6.5, label: "CS/min", unit: "", hint: "6,5+" },
+};
+const num = (v) => Number(v).toLocaleString("nl-NL", { maximumFractionDigits: 1 });
+const goalOk = (t, v) => (v == null ? null : t.max != null ? v <= t.max : v >= t.min);
+function goalStat(k, v, T) {
+  const t = T[k], okv = goalOk(t, v);
+  return `<div class="stat goal ${okv == null ? "" : okv ? "good" : "bad"}"><b>${v == null ? "?" : num(v) + t.unit}</b><span>${esc(t.label)}</span><small>doel ${esc(t.hint)}</small></div>`;
+}
+
+function renderGoals(s) {
+  const el = $("#goals");
+  const g = s.goals;
+  const show = !!g?.avg?.games && !s.me;
+  el.classList.toggle("hidden", !show);
+  if (!show) return;
+  const T = g.targets || GOAL_TARGETS;
+  const wasOpen = !!el.querySelector("details.recent")?.open; // elke state-update tekent opnieuw
+  const met = GOAL_KEYS.filter((k) => goalOk(T[k], g.avg[k])).length;
+  const rows = (g.recent || []).map((r) => `<tr class="${r.win ? "w" : "l"}"><td>${r.win ? "W" : "L"}</td><td>${esc(r.champ)}</td><td>${esc(r.kda)}</td>${GOAL_KEYS.map((k) => { const okv = goalOk(T[k], r[k]); return `<td class="${okv == null ? "" : okv ? "good" : "bad"}">${r[k] == null ? "?" : num(r[k]) + T[k].unit}</td>`; }).join("")}</tr>`).join("");
+  el.innerHTML = `<h2>Jouw doelen <small>gemiddeld over je laatste ${g.avg.games} games · ${met}/4 gehaald</small></h2>
+    <div class="pg goals">${GOAL_KEYS.map((k) => goalStat(k, g.avg[k], T)).join("")}</div>
+    ${rows ? `<details class="recent"${wasOpen ? " open" : ""}><summary>Laatste ${g.recent.length} games</summary><table><thead><tr><th></th><th>Champ</th><th>KDA</th>${GOAL_KEYS.map((k) => `<th>${esc(T[k].label)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></details>` : ""}`;
 }
 
 function render(s) {
@@ -221,7 +254,7 @@ function render(s) {
   st.className = "status" + (s.client === "verbonden" ? " on" : "");
   for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).value = s.settings[id];
   for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop"]) $("#" + id).checked = !!s.settings[id];
-  renderData(s); renderHero(s); renderBans(s); renderPicks(s); renderPostgame(s);
+  renderData(s); renderHero(s); renderBans(s); renderPicks(s); renderPostgame(s); renderGoals(s);
   $("#content").classList.toggle("hidden", !s.me);
   renderTeam(s); renderRunes(s); renderItems(s); renderSpells(s); renderGuide(s);
   $("#log pre").textContent = (s.log || []).join("\n");

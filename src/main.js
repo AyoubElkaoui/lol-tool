@@ -13,6 +13,7 @@ const guide = require("./guide");
 const an = require("./analysis");
 const picks = require("./picks");
 const update = require("./update");
+const goals = require("./goals");
 
 const lcu = new LcuClient();
 let win = null;
@@ -37,7 +38,7 @@ const blank = () => ({
   runes: null, items: null, teamBuild: null, spells: null, skills: null, guide: null, theirTeam: [], enemyManual: false,
   applied: { runes: null, items: null, spells: null },
 });
-const state = { client: "zoeken", phase: "None", ...blank(), postgame: null, profiles: PROFILES, log: [], data: null, update: null, myStats: {} };
+const state = { client: "zoeken", phase: "None", ...blank(), postgame: null, profiles: PROFILES, log: [], data: null, update: null, myStats: {}, goals: null };
 let autoPickId = 0, autoBanId = 0, autoTried = "", lockTried = "";
 // Zelf gekozen tegenstander in jouw lane (klik in de app); 0 = de tool schat het zelf.
 let manualEnemyId = 0;
@@ -96,8 +97,29 @@ async function refreshData() {
 }
 
 async function refreshMyStats() {
-  try { state.myStats = picks.myStats(await lcu.get("/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=99")); push(); }
+  let history = null;
+  try { history = await lcu.get("/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=99"); state.myStats = picks.myStats(history); push(); }
   catch { /* geen historie: rijen tonen dan alleen de data */ }
+  if (history) refreshGoals(history).catch((e) => log("Doelen niet bijgewerkt: " + e.message));
+}
+
+// Gemiddelde deaths / KP / control wards / CS per min over je laatste 20 games.
+// Per game één extra request (voor de kills van je team); die blijven bewaard.
+const gameCache = new Map();
+async function refreshGoals(history) {
+  const me = await lcu.currentSummoner();
+  const lines = [];
+  for (const g of goals.riftGames(history, 20)) {
+    let line = gameCache.get(g.gameId);
+    if (!line) {
+      try { line = goals.fromGame(await lcu.get(`/lol-match-history/v1/games/${g.gameId}`), me.puuid); } catch { line = null; }
+      if (line) gameCache.set(g.gameId, line);
+    }
+    if (line) lines.push(line);
+  }
+  const champs = await dd.champions();
+  state.goals = { targets: goals.TARGETS, avg: goals.average(lines), recent: lines.slice(0, 10).map((l) => ({ ...l, champ: champs[l.championId]?.name || "?" })) };
+  push();
 }
 
 async function checkUpdate() {
@@ -503,15 +525,13 @@ async function processEndOfGame() {
     const cs = (s.MINIONS_KILLED || 0) + (s.NEUTRAL_MINIONS_KILLED || 0);
     const champs = await dd.champions();
     const champ = champs[me.championId];
-    const tips = [];
-    const csm = cs / mins;
-    if (csm < 5) tips.push(`CS ${csm.toFixed(1)}/min: doel is 6+. Laat geen waves vallen voor een roam die niets oplevert.`);
-    if ((s.NUM_DEATHS || 0) >= 7) tips.push(`${s.NUM_DEATHS} deaths: te veel. Na 2 deaths in lane: alleen nog farmen onder tower tot jungle komt.`);
-    if ((s.VISION_SCORE || 0) / mins < 0.8) tips.push("Weinig vision: zet je trinket elke keer als hij klaar is, river-bush bij 2:45.");
-    if (!tips.length) tips.push("Nette stats. Werkpunt blijft: games afsluiten als je voor staat (Baron/torens, geen chases).");
-    state.postgame = { champ: champ?.name, win: eog.gameLength && (eog.teams || []).find((t) => t.isPlayerTeam)?.isWinningTeam, kda: `${s.CHAMPIONS_KILLED || 0}/${s.NUM_DEATHS || 0}/${s.ASSISTS || 0}`, cs, csm: csm.toFixed(1), mins: Math.round(mins), vision: s.VISION_SCORE || 0, tips };
-    log(`Game klaar: ${champ?.name || "?"} ${state.postgame.kda}, ${state.postgame.csm} cs/min`);
+    const line = goals.fromEog(eog);
+    const tips = goals.tips(line);
+    if (!tips.length) tips.push("Alle vier de doelen gehaald. Werkpunt blijft: games afsluiten als je voor staat (Baron/torens, geen chases).");
+    state.postgame = { champ: champ?.name, win: eog.gameLength && (eog.teams || []).find((t) => t.isPlayerTeam)?.isWinningTeam, kda: line.kda, cs, csm: line.csm, deaths: line.deaths, kp: line.kp, cw: line.cw, mins: Math.round(mins), vision: s.VISION_SCORE || 0, tips };
+    log(`Game klaar: ${champ?.name || "?"} ${line.kda}, KP ${line.kp ?? "?"}%, ${line.cw ?? "?"} control wards, ${line.csm} cs/min`);
     push();
+    setTimeout(() => refreshMyStats(), 15000); // match history is pas even later bijgewerkt
   } catch { /* geen eog-data */ }
 }
 
