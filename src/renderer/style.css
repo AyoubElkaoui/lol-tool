@@ -203,3 +203,23 @@ main { padding: 18px; max-width: 1140px; width: 100%; margin: 0 auto; display: g
 .recent th { color: var(--muted); font-weight: 600; font-size: 11px; }
 .recent td.good { color: var(--good); } .recent td.bad { color: var(--bad); }
 .recent tr.w td:first-child { color: var(--good); font-weight: 700; } .recent tr.l td:first-child { color: var(--bad); font-weight: 700; }
+
+/* analyse: goed / beter kan / wins vs losses */
+.analysis { margin-top: 14px; display: grid; gap: 12px; }
+.ahead { font-size: 12px; color: var(--muted); letter-spacing: .3px; }
+.pcols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 900px) { .pcols { grid-template-columns: 1fr; } }
+.pcol { background: rgba(1,10,19,.35); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.pcol h3, .decide h3 { margin: 0 0 6px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+.pcol.good { border-color: rgba(61,214,140,.3); } .pcol.good h3 { color: var(--good); }
+.pcol.bad { border-color: rgba(255,92,92,.3); } .pcol.bad h3 { color: var(--bad); }
+.pcol ul { margin: 0; padding-left: 16px; } .pcol li { margin: 5px 0; }
+.pcol li small { display: block; color: var(--muted); font-size: 12px; }
+.pcol li.none { list-style: none; margin-left: -16px; color: var(--muted); }
+.decide h3 { color: var(--gold); }
+.decide table { border-collapse: collapse; font-size: 13px; }
+.decide td, .decide th { padding: 3px 14px 3px 0; text-align: left; }
+.decide th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; }
+.decide td.good { color: var(--good); font-weight: 700; } .decide td.bad { color: var(--bad); font-weight: 700; }
+.opps { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; }
+.opps .bad { color: var(--bad); } .opps .good { color: var(--good); }

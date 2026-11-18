@@ -20,9 +20,9 @@ let win = null;
 
 const PROFILES = {
   // teamPick: score tegen het hele vijandelijke team; favorite: bij twijfel deze champ.
-  // Ayoub speelt alleen Rengar; is die weg, dan hovert/lockt de tool de beste counter pick.
+  // Allebei one-trick: Ayoub Rengar, Danny Gangplank. Is die weg, dan hovert/lockt de tool de beste counter pick.
   ayoub: { name: "Ayoub", lane: "jungle", pool: ["rengar"], favorite: "rengar", teamPick: true },
-  danny: { name: "Danny", lane: "top", pool: ["gangplank", "tahmkench", "illaoi"], favorite: "gangplank" },
+  danny: { name: "Danny", lane: "top", pool: ["gangplank"], favorite: "gangplank" },
 };
 
 // Pool voor de lane die je in champ select krijgt; anders de standaard-pool van het profiel.
@@ -118,7 +118,14 @@ async function refreshGoals(history) {
     if (line) lines.push(line);
   }
   const champs = await dd.champions();
-  state.goals = { targets: goals.TARGETS, avg: goals.average(lines), recent: lines.slice(0, 10).map((l) => ({ ...l, champ: champs[l.championId]?.name || "?" })) };
+  const prof = PROFILES[settings.profile];
+  const mainId = Object.values(champs).find((c) => c.lolaSlug === prof.favorite)?.id || null;
+  const names = Object.fromEntries(Object.values(champs).map((c) => [c.id, c.name]));
+  state.goals = {
+    targets: goals.TARGETS, avg: goals.average(lines),
+    recent: lines.slice(0, 10).map((l) => ({ ...l, champ: champs[l.championId]?.name || "?" })),
+    analysis: goals.analysis(lines, { lane: prof.lane, mainId, names }),
+  };
   push();
 }
 
@@ -312,7 +319,7 @@ async function processPick(session, champs, patch) {
       state.ugg = u;
       state.skills = u ? { order: u.skillOrder, priority: u.skillPriority } : null;
     }
-    // Runes tegen de tegenstander in jouw lane (bij Danny: de vijandelijke jungler) bovenaan.
+    // Runes tegen de tegenstander in jouw lane (in jungle: de vijandelijke jungler) bovenaan.
     let pages = [...runes.pages];
     if (state.enemy) {
       try {
@@ -526,7 +533,7 @@ async function processEndOfGame() {
     const champs = await dd.champions();
     const champ = champs[me.championId];
     const line = goals.fromEog(eog);
-    const tips = goals.tips(line);
+    const tips = goals.tips(line, PROFILES[settings.profile].lane);
     if (!tips.length) tips.push("Alle vier de doelen gehaald. Werkpunt blijft: games afsluiten als je voor staat (Baron/torens, geen chases).");
     state.postgame = { champ: champ?.name, win: eog.gameLength && (eog.teams || []).find((t) => t.isPlayerTeam)?.isWinningTeam, kda: line.kda, cs, csm: line.csm, deaths: line.deaths, kp: line.kp, cw: line.cw, mins: Math.round(mins), vision: s.VISION_SCORE || 0, tips };
     log(`Game klaar: ${champ?.name || "?"} ${line.kda}, KP ${line.kp ?? "?"}%, ${line.cw ?? "?"} control wards, ${line.csm} cs/min`);
@@ -579,6 +586,7 @@ ipcMain.handle("set-settings", (_e, patch) => {
   settings = { ...settings, ...patch }; saveSettings();
   if ("alwaysOnTop" in patch && win) win.setAlwaysOnTop(!!settings.alwaysOnTop, "floating");
   if ("tier" in patch) refreshData().then(push).catch(() => {});
+  if ("profile" in patch) refreshMyStats();
   if ("tier" in patch || "profile" in patch || "runeChoice" in patch || "flashKey" in patch) { lastKey = ""; lastBanKey = ""; lastPickKey = ""; state.applied = { runes: null, items: null, spells: null }; }
   push(); return settings;
 });

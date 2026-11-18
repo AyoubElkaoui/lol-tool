@@ -10,7 +10,12 @@
     settings: { profile: "ayoub", tier: "gold_plus", autoRunes: true, autoItems: true, autoSpells: true, autoHover: true, autoBan: false, autoLock: false, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d" },
     profiles: { ayoub: { name: "Ayoub" }, danny: { name: "Danny" } },
     data: { patch: "16.21", latest: "16.21", games: 190046, tier: "gold_plus" }, myStats: { 39: { wins: 11, games: 24 }, 17: { wins: 1, games: 3 } },
-    goals: { avg: { games: 20, deaths: 6.6, kp: 44, cw: 0.2, csm: 6.3 }, recent: [{ win: true, champ: "Rengar", kda: "17/2/4", deaths: 2, kp: 66, cw: 1, csm: 6.7 }, { win: false, champ: "Rengar", kda: "8/3/5", deaths: 3, kp: 72, cw: 0, csm: 6.5 }, { win: false, champ: "Rengar", kda: "4/9/3", deaths: 9, kp: 38, cw: 0, csm: 5.4 }] },
+    goals: { avg: { games: 20, deaths: 6.6, kp: 44, cw: 0.2, csm: 6.3 },
+      analysis: { champ: "Rengar", games: 14, wins: 6, losses: 8, form: { games: 5, wins: 2 },
+        good: [{ text: "Schade-aandeel: 20,4% (doel 20%+)" }, { text: "Vision/min: 0,8 (doel 0,8+)" }],
+        bad: [{ text: "Deaths: 5,6 (doel onder 5)", tip: "na 2 deaths niet meer zelf het gevecht beginnen; farm en spring pas in als een teamgenoot engaget." }, { text: "Kill participation: 42,2% (doel 55%+)", tip: "wees bij elke drake/herald en elk gevecht bij een objective." }, { text: "Control wards: 0 (doel 1+ per game)", tip: "elke back één, in de river-bush bij drake of herald." }, { text: "CS/min: 5,4 (doel 6,5+)", tip: "tussen ganks door camps blijven clearen." }],
+        deciders: [{ label: "Drakes (team)", unit: "", wins: 3.5, losses: 0.6 }, { label: "Schade-aandeel", unit: "%", wins: 28.8, losses: 14 }, { label: "Kill participation", unit: "%", wins: 51.3, losses: 35 }],
+        hard: [{ name: "Briar", games: 2, wins: 0 }, { name: "Sylas", games: 2, wins: 0 }], easy: [] }, recent: [{ win: true, champ: "Rengar", kda: "17/2/4", deaths: 2, kp: 66, cw: 1, csm: 6.7 }, { win: false, champ: "Rengar", kda: "8/3/5", deaths: 3, kp: 72, cw: 0, csm: 6.5 }, { win: false, champ: "Rengar", kda: "4/9/3", deaths: 9, kp: 38, cw: 0, csm: 5.4 }] },
     update: q.get("update") ? { version: "0.1.5", url: "https://github.com/AyoubElkaoui/lol-tool/releases" } : null,
   };
   const perk = (id, name, icon, style) => [id, { name, icon, style }];

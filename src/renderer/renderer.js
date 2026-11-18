@@ -232,6 +232,22 @@ function goalStat(k, v, T) {
   return `<div class="stat goal ${okv == null ? "" : okv ? "good" : "bad"}"><b>${v == null ? "?" : num(v) + t.unit}</b><span>${esc(t.label)}</span><small>doel ${esc(t.hint)}</small></div>`;
 }
 
+// Wat gaat goed, wat kan beter, wat maakt je wins anders dan je losses, tegen wie lastig.
+const nl1 = (v) => Number(v).toLocaleString("nl-NL", { maximumFractionDigits: 1 });
+const rec = (o) => `${o.wins}-${o.games - o.wins}`;
+function renderAnalysis(a) {
+  if (!a) return "";
+  const head = `${a.champ ? esc(a.champ) + " · " : ""}${a.games} games · ${a.wins}W ${a.losses}L · laatste ${a.form.games}: ${a.form.wins}W ${a.form.games - a.form.wins}L`;
+  const good = a.good.map((x) => `<li>${esc(x.text)}</li>`).join("") || "<li class='none'>Nog niets boven je doel.</li>";
+  const bad = a.bad.map((x) => `<li>${esc(x.text)}${x.tip ? `<small>${esc(x.tip)}</small>` : ""}</li>`).join("") || "<li class='none'>Alles op of boven je doel.</li>";
+  const dec = a.deciders.length ? `<div class="decide"><h3>Wat je wins anders maakt</h3><table><thead><tr><th></th><th>Wins</th><th>Losses</th></tr></thead><tbody>${a.deciders.map((d) => `<tr><td>${esc(d.label)}</td><td class="good">${nl1(d.wins)}${d.unit}</td><td class="bad">${nl1(d.losses)}${d.unit}</td></tr>`).join("")}</tbody></table></div>` : "";
+  const opp = (list) => list.map((o) => `${esc(o.name)} ${rec(o)}`).join(" · ");
+  const opps = a.hard.length || a.easy.length ? `<div class="opps">${a.hard.length ? `<span class="bad">Lastig: ${opp(a.hard)}</span>` : ""}${a.easy.length ? `<span class="good">Goed tegen: ${opp(a.easy)}</span>` : ""}</div>` : "";
+  return `<div class="analysis"><div class="ahead">${head}</div>
+    <div class="pcols"><div class="pcol good"><h3>Goed</h3><ul>${good}</ul></div><div class="pcol bad"><h3>Beter kan</h3><ul>${bad}</ul></div></div>
+    ${dec}${opps}</div>`;
+}
+
 function renderGoals(s) {
   const el = $("#goals");
   const g = s.goals;
@@ -244,6 +260,7 @@ function renderGoals(s) {
   const rows = (g.recent || []).map((r) => `<tr class="${r.win ? "w" : "l"}"><td>${r.win ? "W" : "L"}</td><td>${esc(r.champ)}</td><td>${esc(r.kda)}</td>${GOAL_KEYS.map((k) => { const okv = goalOk(T[k], r[k]); return `<td class="${okv == null ? "" : okv ? "good" : "bad"}">${r[k] == null ? "?" : num(r[k]) + T[k].unit}</td>`; }).join("")}</tr>`).join("");
   el.innerHTML = `<h2>Jouw doelen <small>gemiddeld over je laatste ${g.avg.games} games · ${met}/4 gehaald</small></h2>
     <div class="pg goals">${GOAL_KEYS.map((k) => goalStat(k, g.avg[k], T)).join("")}</div>
+    ${renderAnalysis(g.analysis)}
     ${rows ? `<details class="recent"${wasOpen ? " open" : ""}><summary>Laatste ${g.recent.length} games</summary><table><thead><tr><th></th><th>Champ</th><th>KDA</th>${GOAL_KEYS.map((k) => `<th>${esc(T[k].label)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></details>` : ""}`;
 }
 
