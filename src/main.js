@@ -15,6 +15,7 @@ const picks = require("./picks");
 const update = require("./update");
 const goals = require("./goals");
 const live = require("./live");
+const fg = require("./foreground");
 
 const lcu = new LcuClient();
 let win = null;
@@ -518,6 +519,7 @@ async function completeAction(action, championId) {
 }
 
 let lockTriedAt = 0, lockDebugged = "";
+const lockDone = new Map(); // actionId -> tijd van gelukte lock; na 3 s nog open = opnieuw proberen
 async function autoLock(session, champs) {
   const left = timeLeft(session.timer);
   // Eén keer per beurt loggen wat de tool ziet, zodat een mislukte lock te verklaren is.
@@ -525,7 +527,7 @@ async function autoLock(session, champs) {
     const a = myAction(session, type);
     if (a?.isInProgress && lockDebugged !== `${a.id}`) { lockDebugged = `${a.id}`; log(`Jouw ${type}-beurt: ${Number.isFinite(left) ? Math.round(left / 1000) + "s" : "geen timer"}, fase ${session.timer?.phase || "?"}, gehoverd ${champs[a.championId]?.name || "niets"}`); }
   }
-  if (left > LOCK_AT_MS) return;
+  if (left > LOCK_AT_MS || session.timer?.phase === "PLANNING") return; // in PLANNING kan bannen nog niet
   const taken = takenIds(session);
   for (const type of ["ban", "pick"]) {
     if (!(type === "ban" ? settings.autoBan : settings.autoLock)) continue;
@@ -539,10 +541,12 @@ async function autoLock(session, champs) {
     if (!championId) { if (lockTried !== `${action.id}:none`) { lockTried = `${action.id}:none`; log(`Auto ${type}: geen champ om te ${type === "ban" ? "bannen" : "locken"} (data nog niet geladen?)`); } continue; }
     const attempt = `${action.id}:${championId}`;
     if (attempt === lockTried && Date.now() - lockTriedAt < 1500) continue; // client weigerde: even wachten
+    if (lockDone.has(action.id) && Date.now() - lockDone.get(action.id) < 3000) continue; // al gelukt; de client werkt de session even later bij
     lockTried = attempt; lockTriedAt = Date.now();
     const name = champs[championId]?.name || championId;
     try {
       await completeAction(action, championId);
+      lockDone.set(action.id, Date.now());
       log(type === "ban" ? `Automatisch gebanned: ${name}` : `Automatisch gelockt: ${name}`);
     } catch (e) { log(`${type === "ban" ? "Bannen" : "Locken"} mislukt (${name}): ${e.message}`); }
   }
@@ -628,7 +632,9 @@ function hideOverlay() { if (overlay && !overlay.isDestroyed()) overlay.hide(); 
 
 async function liveTick() {
   if (liveBusy) return;
-  if (!settings.overlay || overlayHidden || state.phase !== "InProgress") { hideOverlay(); return; }
+  if (!settings.overlay || overlayHidden || state.phase !== "InProgress") { hideOverlay(); fg.stop(); return; }
+  // Alleen tonen als de game zelf vooraan staat: niet in het laadscherm, de client of na alt-tab.
+  if (!fg.gameInFront()) { hideOverlay(); return; }
   liveBusy = true;
   try {
     const d = await live.allGameData();
@@ -640,10 +646,14 @@ async function liveTick() {
       extra: [...(state.items?.situational || []), ...[4, 5, 6].flatMap((k) => (opts[k] || []).map((o) => o.id))],
     };
     const view = live.analyse(d, { itemData, champs, plan, targets: goals.TARGETS });
+    if (!view || (d.gameData?.gameTime || 0) < 5) { hideOverlay(); return; } // laadscherm
     const o = ensureOverlay();
     if (view) {
       o.webContents.send("live", { ...view, itemUrl: urls.item("").replace(/\.png$/, ""), champUrl: urls.champion("") });
       if (!o.isVisible()) o.showInactive();
+      // De game zet zichzelf soms boven alles; elke keer opnieuw bovenop leggen.
+      o.setAlwaysOnTop(true, "screen-saver", 1);
+      o.moveTop();
     }
   } catch {
     // Laadscherm of game net klaar: API nog/niet meer bereikbaar.
@@ -664,7 +674,7 @@ async function tick() {
   if (phase === "None" && !(await lcu.connect())) { state.client = "zoeken"; lastKey = ""; lastBanKey = ""; lastPickKey = ""; push(); return; }
   if (phase !== state.phase) {
     state.phase = phase;
-    if (phase === "ChampSelect") { Object.assign(state, blank()); runeKey = null; buildIdx = null; baseItems = null; baseRunes = null; state.postgame = null; autoPickId = 0; autoBanId = 0; autoTried = ""; lockTried = ""; manualEnemyId = 0; refreshMyStats(); lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
+    if (phase === "ChampSelect") { Object.assign(state, blank()); runeKey = null; buildIdx = null; baseItems = null; baseRunes = null; state.postgame = null; autoPickId = 0; autoBanId = 0; autoTried = ""; lockTried = ""; lockDone.clear(); manualEnemyId = 0; refreshMyStats(); lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
     if (phase === "Lobby" || phase === "Matchmaking") { lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
     push();
   }
@@ -747,5 +757,5 @@ app.whenReady().then(async () => {
   setInterval(checkUpdate, 6 * 60 * 60 * 1000);
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
-app.on("will-quit", () => { try { globalShortcut.unregisterAll(); } catch { /* ok */ } });
+app.on("will-quit", () => { try { globalShortcut.unregisterAll(); } catch { /* ok */ } fg.stop(); });
 app.on("window-all-closed", () => { app.quit(); });
