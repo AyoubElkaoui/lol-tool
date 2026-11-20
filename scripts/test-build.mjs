@@ -38,7 +38,9 @@ if (style) {
   console.log(`vs ${laner.name.padEnd(8)}:`, v.core.map((x) => n(x.id)).join(" → "), `(${v.core[0]?.n} games)`);
   if (v.core[0]?.n >= 150) { items = { ...items, core: v.core.map((x) => x.id) }; label = `tegen ${laner.name}`; }
 }
-const tb = an.teamBuild({ me, core: items.core, situational: items.situational, itemData, team, laner, defaultBoot: items.boot, isBoot, style: style?.key });
+const ugg = require("../src/ugg.js");
+let u = null; try { u = await ugg.overview({ patch: await dd.lolalyticsPatch(), championId: me.id, lane, tier }); } catch {}
+const tb = an.teamBuild({ me, core: items.core, situational: items.situational, options: u?.itemOptions, itemData, team, laner, defaultBoot: items.boot, isBoot, style: style?.key });
 console.log(`\nteam: ${team.ad.length} AD, ${team.ap.length} AP, ${team.tanks.length} tank · teamgenoten: ${allies.map((c) => c.name).join(", ") || "-"}`);
 console.log("basis      :", label, "→", items.core.map(n).join(" → "));
 console.log("vs dit team:", tb.build.map(n).join(" → "));

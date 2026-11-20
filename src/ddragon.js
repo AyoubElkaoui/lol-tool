@@ -70,15 +70,26 @@ function lolalyticsSlug(champ) {
   return champ.name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+// Items die je maar één keer per build mag hebben (game-regel "Limited to 1 ... item").
+// Data Dragon noemt sommige groepen als passive-naam; Last Whisper, Blight en Quicksilver niet.
+const GROUP_PASSIVES = { Spellblade: "spellblade", Lifeline: "lifeline", Cleave: "hydra", Awe: "tear", Manaflow: "tear" };
+const GROUP_IDS = { lastwhisper: [3036, 3033, 6694], blight: [3135, 3137], quicksilver: [3140, 3139] };
+function uniqueGroups(id, passives) {
+  const g = new Set(passives.map((p) => GROUP_PASSIVES[p]).filter(Boolean));
+  for (const [k, ids] of Object.entries(GROUP_IDS)) if (ids.includes(id)) g.add(k);
+  return [...g];
+}
+
 async function items() {
   if (mem.items) return mem.items;
   const v = await version();
-  const data = await cached(`items2-${v}.json`, async () => {
+  const data = await cached(`items3-${v}.json`, async () => {
     const d = await fetchJson(`${BASE}/cdn/${v}/data/en_US/item.json`);
     const out = {};
     for (const [id, it] of Object.entries(d.data)) {
       const text = String(it.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
-      out[id] = { id: Number(id), name: it.name, image: it.image.full, gold: it.gold?.total ?? 0, tags: it.tags || [], gw: /Grievous Wounds/i.test(text), pctPen: /\d+%\s*(Magic|Armor) Penetration/i.test(text) };
+      const passives = [...String(it.description || "").matchAll(/<passive>([^<]+)<\/passive>/g)].map((m) => m[1].trim());
+      out[id] = { id: Number(id), name: it.name, image: it.image.full, gold: it.gold?.total ?? 0, tags: it.tags || [], gw: /Grievous Wounds/i.test(text), pctPen: /\d+%\s*(Magic|Armor) Penetration/i.test(text), groups: uniqueGroups(Number(id), passives) };
     }
     return out;
   });

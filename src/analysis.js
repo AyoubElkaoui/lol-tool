@@ -143,6 +143,11 @@ function teamBuild({ me, core, situational, options, itemData, team, laner, defa
   // Hoe vaker jouw champ een item koopt, hoe lager de rank: core, dan situationeel, dan u.gg-opties.
   const order = [...core, ...situational, ...[4, 5, 6].flatMap((k) => [...(options?.[k] || [])].sort((a, b) => b.games - a.games).map((o) => o.id))];
   const coreNoBoots = core.filter((id) => !isBoot(id));
+  // Twee items uit dezelfde uniek-groep (bv. Lord Dominik's + Mortal Reminder) kan niet.
+  const clash = (id, list) => {
+    const g = itemData[id]?.groups || [];
+    return g.length > 0 && list.some((o) => o !== id && (itemData[o]?.groups || []).some((x) => g.includes(x)));
+  };
   const picked = [];
   for (const t of threats(team, laner)) {
     // Kandidaten: wat jouw champ echt bouwt (order), met de eigenschap die deze dreiging oplost.
@@ -154,13 +159,25 @@ function teamBuild({ me, core, situational, options, itemData, team, laner, defa
       if (p) p.why += ` en ${t.why}`; else picked.push({ id: already, why: t.why, key: t.key, inCore: true });
       continue;
     }
+    // Een item uit dezelfde groep als wat al gekozen is lost het al op (Mortal Reminder ≈ LDR qua pen).
+    const taken = [...coreNoBoots.slice(0, 2), ...picked.map((p) => p.id)];
+    const sibling = ids[0] && clash(ids[0], taken) ? ids[0] : null;
+    if (sibling) {
+      const holder = taken.find((o) => clash(o, [sibling]));
+      const p = picked.find((x) => x.id === holder);
+      if (p) p.why += ` en ${t.why}`; else picked.push({ id: holder, why: t.why, key: t.key, inCore: true });
+      continue;
+    }
     const id = ids[0];
     if (id) picked.push({ id, why: t.why, key: t.key });
   }
   const counters = picked.filter((p) => !p.inCore).slice(0, 2);
   const build = [coreNoBoots[0], boots.id, coreNoBoots[1]].filter(Boolean);
-  for (const p of counters) if (!build.includes(p.id)) build.push(p.id);
-  for (const id of coreNoBoots.slice(2)) if (!build.includes(id) && build.length < 6) build.push(id);
+  for (const p of counters) if (!build.includes(p.id) && !clash(p.id, build)) build.push(p.id);
+  for (const id of coreNoBoots.slice(2)) if (!build.includes(id) && !clash(id, build) && build.length < 6) build.push(id);
+  // Aanvullen als er een plek vrij is: eerst de meest gebouwde 4e-6e items (u.gg), dan situationeel.
+  const fill = [...[4, 5, 6].flatMap((k) => [...(options?.[k] || [])].sort((a, b) => b.games - a.games).map((o) => o.id)), ...situational];
+  for (const id of [...new Set(fill)]) if (build.length < 6 && itemData[id] && !isBoot(id) && !build.includes(id) && !clash(id, build)) build.push(id);
   // Defensief/alternatief: overige counter-items + wat de data als situationeel geeft.
   const defensive = [...new Set([...picked.slice(2).map((p) => p.id), ...situational.filter((id) => !build.includes(id))])].filter((id) => !build.includes(id) && itemData[id]).slice(0, 3);
   const why = Object.fromEntries(picked.map((p) => [p.id, p.why]));
