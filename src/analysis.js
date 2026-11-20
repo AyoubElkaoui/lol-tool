@@ -4,25 +4,39 @@
 
 const HEALERS = new Set(["aatrox", "drmundo", "fiddlesticks", "illaoi", "irelia", "jax", "kayn", "maokai", "mordekaiser", "nasus", "olaf", "renekton", "sett", "soraka", "swain", "sylas", "tryndamere", "vladimir", "volibear", "warwick", "yone", "yuumi", "zac", "briar", "ambessa", "garen", "darius", "nami", "sona", "senna", "kindred", "rengar", "vayne"]);
 const CC_HEAVY = new Set(["leona", "nautilus", "morgana", "lissandra", "sejuani", "amumu", "malphite", "ashe", "rell", "thresh", "blitzcrank", "alistar", "maokai", "zac", "ornn", "galio", "skarner", "veigar", "lux"]);
-const AP_OVERRIDE = new Set(["kayle", "diana", "akali", "katarina", "ekko", "fizz", "gragas", "sylas", "mordekaiser", "singed", "rumble", "elise", "evelynn", "nidalee", "amumu", "fiddlesticks", "kennen", "teemo", "gwen", "lillia", "vladimir", "swain", "aurora", "mel", "hwei", "smolder"]);
+const AD_OVERRIDE = new Set(["kayn", "shaco", "sett", "rengar", "nocturne", "yone", "yasuo", "masteryi", "belveth", "kalista", "senna", "pyke", "naafiri"]);
+const AP_OVERRIDE = new Set(["corki", "kayle", "diana", "akali", "katarina", "ekko", "fizz", "gragas", "sylas", "mordekaiser", "singed", "rumble", "elise", "evelynn", "nidalee", "amumu", "fiddlesticks", "kennen", "teemo", "gwen", "lillia", "vladimir", "swain", "aurora", "mel", "hwei", "smolder"]);
 
+// AD of AP: eerst de uitzonderingen (AP-bruisers als Diana/Mordekaiser), dan Riot's eigen
+// cijfers (info.attack vs info.magic), en pas als die ontbreken de tags.
 function dmgType(ch) {
   if (!ch) return "AD";
   const s = ch.lolaSlug;
   if (AP_OVERRIDE.has(s)) return "AP";
-  if (ch.tags?.includes("Mage")) return "AP";
+  if (AD_OVERRIDE.has(s)) return "AD";
   if (ch.tags?.includes("Support") && ch.partype === "Mana" && !ch.tags.includes("Marksman") && !ch.tags.includes("Fighter")) return "AP";
+  if (ch.info && ch.info.attack !== ch.info.magic) return ch.info.magic > ch.info.attack ? "AP" : "AD";
+  if (ch.tags?.includes("Mage")) return "AP";
   return "AD";
 }
 
-function analyseTeam(enemies) {
+// Een echte tank = speelt geen support (Blitzcrank/Thresh/Leona bouwen geen tank-items die
+// %-pen vragen) en is volgens Riot vooral Tank, of heel taai (info.defense >= 8).
+function isRealTank(c, role) {
+  if (role === "support") return false;
+  const t = c.tags || [];
+  return t[0] === "Tank" || (t.includes("Tank") && (c.info?.defense || 0) >= 8);
+}
+
+// roles: champId -> lane (uit lane-percentages); zonder roles alleen op tags.
+function analyseTeam(enemies, roles = {}) {
   const list = enemies.filter(Boolean);
   const ad = list.filter((c) => dmgType(c) === "AD");
   const ap = list.filter((c) => dmgType(c) === "AP");
-  const tanks = list.filter((c) => c.tags?.includes("Tank"));
+  const tanks = list.filter((c) => isRealTank(c, roles[c.id]));
   const healers = list.filter((c) => HEALERS.has(c.lolaSlug));
   const cc = list.filter((c) => CC_HEAVY.has(c.lolaSlug) || c.tags?.includes("Tank"));
-  const assassins = list.filter((c) => c.tags?.includes("Assassin"));
+  const assassins = list.filter((c) => c.tags?.includes("Assassin") && roles[c.id] !== "support");
   const notes = [];
   if (list.length >= 3) {
     if (ad.length >= 3) notes.push(`${ad.length} AD-champions → armor (2e/3e item) loont, Steelcaps als boots.`);

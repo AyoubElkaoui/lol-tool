@@ -28,6 +28,7 @@
       </label>
       <label class="field"><span>Data van tier</span>
         <select id="tier">
+          <option value="auto">Automatisch (jouw rank)</option>
           <option value="bronze">Bronze</option>
           <option value="silver">Silver</option>
           <option value="gold_plus">Gold en hoger</option>
@@ -54,7 +55,8 @@
       <label class="switch"><input type="checkbox" id="autoLock" /><span>Automatisch locken (laatste 8 sec van je beurt)</span></label>
       <label class="switch"><input type="checkbox" id="autoAccept" /><span>Ready check automatisch accepteren</span></label>
       <label class="switch"><input type="checkbox" id="alwaysOnTop" /><span>Venster altijd bovenaan</span></label>
-      <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen sets blijven staan. Automatisch bannen/locken staat standaard uit. Aan: de tool wacht tot de laatste 8 seconden van je beurt en bant/lockt wat er gehoverd staat; hover je zelf iets, dan wordt dát het.</p>
+      <label class="switch"><input type="checkbox" id="overlay" /><span>Overlay in de game (Ctrl+Shift+L aan/uit; League op Borderless zetten)</span></label>
+      <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen sets blijven staan. Automatisch bannen/locken staat standaard uit. Wat de tool doet staat ook in log.txt (map %APPDATA%\LoL Tool). Aan: de tool wacht tot de laatste 8 seconden van je beurt en bant/lockt wat er gehoverd staat; hover je zelf iets, dan wordt dát het.</p>
     </aside>
 
     <main id="main">

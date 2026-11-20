@@ -29,6 +29,9 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 - **Data-status:** bovenin staat van welke patch en tier de data is. De tool pakt de nieuwste patch zodra daar genoeg games op staan, ook als de app open blijft staan.
 - **Update-melding:** staat er een nieuwe versie op GitHub, dan verschijnt bovenin een downloadlink.
 - **Hun team:** AD/AP/tank/healer-telling, boots-keuze met reden, defensief item als het nodig is, anti-heal-advies. Werkt live bij als tegenstanders bijkomen.
+- **Overlay in de game (nieuw):** klein paneel rechts in beeld met je CS/min, deaths, KP en control ward, het volgende item uit je build (en hoeveel goud je nog mist), wie bij hen fed is en welk item daartegen helpt, dode vijanden met respawntijd en de drake/Baron-respawn. Doorklikbaar; Ctrl+Shift+L zet hem aan/uit. Zet League op **Borderless** (in echt fullscreen kan niets over de game heen tekenen).
+- **Data van jouw niveau:** tier staat standaard op automatisch: de tool leest je rank uit de client (Iron/Bronze → Bronze-data, Silver → Silver, Gold/Plat → Gold+).
+- **Matchup-feiten:** per tegenstander: of je korte of lange games beter wint, hoeveel first blood weegt, en je eigen record + gemiddelde deaths tegen die champ (laatste 40 games). Gangplank heeft daarnaast tips voor 17 toplaners.
 - **Na de game:** KDA, CS/min, vision en 1-2 concrete werkpunten.
 - **Instellingen:** profiel (Ayoub jungle: Rengar / Danny top: Gangplank), tier, rune-keuze, auto runes/items/spells, automatisch bannen/locken, ready check auto-accepteren, venster altijd bovenaan.
 

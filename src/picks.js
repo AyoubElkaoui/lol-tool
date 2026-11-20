@@ -32,6 +32,18 @@ async function laneOpponent({ enemyIds, lane, champs, patch, tier }) {
   return pick && (pick.lanes[lane] || 0) >= MIN_LANE_SHARE ? pick.champ : null;
 }
 
+// Rol van elke bekende tegenstander (champId -> lane), zelfde verdeling als hierboven.
+async function enemyRoles({ enemyIds, champs, patch, tier, lane }) {
+  const known = [];
+  for (const id of enemyIds) {
+    const c = champs[id]; if (!c) continue;
+    let lanes = {};
+    try { lanes = (await lol.counters({ patch, slug: c.lolaSlug, lane, tier })).stats?.lanes || {}; } catch { /* geen data */ }
+    known.push({ champ: c, lanes });
+  }
+  return Object.fromEntries(assignLanes(known).map((x) => [x.champ.id, x.lane]));
+}
+
 // Alle manieren om k champs over k verschillende lanes te zetten (max. 5! = 120): hoogste
 // product van de lane-percentages wint. Een champ zonder data telt als 0,5% overal.
 function assignLanes(known) {
@@ -157,4 +169,4 @@ function myStats(history) {
   return out;
 }
 
-module.exports = { laneOpponent, assignLanes, advice, myStats };
+module.exports = { laneOpponent, enemyRoles, assignLanes, advice, myStats };

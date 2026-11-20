@@ -191,4 +191,27 @@ async function defaultLane(opts) {
   try { const d = await call(base("rune", opts)); return d?.header?.defaultLane || null; } catch { return null; }
 }
 
-module.exports = { vsItems, vsRunePages, runePages, itemBuild, counters, resolvePatch, defaultLane };
+// Matchup-feiten van de vs-pagina: winrate per gameduur (wie wint vroeg/laat) en first blood.
+// time: buckets 1..7 = 15-20, 20-25, 25-30, 30-35, 35-40, 40-45, 45+ minuten.
+// blood1: [% games dat jouw champ FB pakt, wr dan, % games dat de tegenstander hem pakt, wr dan].
+async function vsInsights(opts) {
+  const { objs, ref } = await vsObjects(opts);
+  const plain = (o) => o && typeof o === "object" && !Array.isArray(o);
+  const deep = (v) => { v = ref(v); if (Array.isArray(v)) return v.map(deep); if (plain(v)) return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, deep(x)])); return v; };
+  const header = deep(objs.find((o) => plain(o) && "vsWinRate" in o && "wr" in o));
+  const time = deep(objs.find((o) => plain(o) && "timeWin" in o && "time" in o));
+  const obj = deep(objs.find((o) => plain(o) && "blood1" in o));
+  const bucket = (keys) => {
+    let n = 0, w = 0;
+    for (const k of keys) { n += Number(time?.time?.[k]) || 0; w += Number(time?.timeWin?.[k]) || 0; }
+    return n >= 60 ? { wr: Math.round((w / n) * 1000) / 10, n } : null;
+  };
+  const fb = Array.isArray(obj?.blood1) ? obj.blood1.map(Number) : null;
+  return {
+    wr: Number(header?.wr) || null, n: Number(header?.n) || 0,
+    early: bucket(["1", "2"]), mid: bucket(["3", "4"]), late: bucket(["5", "6", "7"]),
+    fb: fb && fb.every(Number.isFinite) ? { take: fb[0], wrTake: fb[1], give: fb[2], wrGive: fb[3] } : null,
+  };
+}
+
+module.exports = { vsInsights, vsItems, vsRunePages, runePages, itemBuild, counters, resolvePatch, defaultLane };

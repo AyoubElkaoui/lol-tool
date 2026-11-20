@@ -121,8 +121,15 @@ class LcuClient {
     try { return await this.get("/lol-gameflow/v1/gameflow-phase"); } catch { return "None"; }
   }
 
+  // Nieuwere clients sturen de timer niet altijd mee in de session; dan apart ophalen.
+  // Zonder timer zag de tool nooit dat de ban-fase liep en lockte/bande hij nooit.
   async champSelect() {
-    try { return await this.get("/lol-champ-select/v1/session"); } catch { return null; }
+    let s;
+    try { s = await this.get("/lol-champ-select/v1/session"); } catch { return null; }
+    if (s && (!s.timer || !Number.isFinite(s.timer.adjustedTimeLeftInPhase))) {
+      try { s.timer = await this.get("/lol-champ-select/v1/session/timer"); } catch { /* geen timer */ }
+    }
+    return s;
   }
 
   async currentSummoner() { return this.get("/lol-summoner/v1/current-summoner"); }

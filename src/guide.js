@@ -53,7 +53,31 @@ function rankSituational(ids, itemData, enemy) {
   return [...ids].sort((a, b) => score(b) - score(a));
 }
 
-function build({ me, enemy, counterRow, runePage, itemBuild, itemNames, itemData, team, teamBuild, spells, skills }) {
+// Concrete tips uit de matchup-data: wie wint vroeg of laat, hoe zwaar first blood weegt.
+function insightLines(me, enemy, x, lane) {
+  const out = [];
+  if (!x) return out;
+  const { early, late, mid } = x;
+  if (early && late) {
+    const d = late.wr - early.wr;
+    if (d >= 3) out.push(`Jij wint LANGE games (35+ min: ${late.wr}%) beter dan korte (<25 min: ${early.wr}%). Overleef de lane, farm, en wacht op je items; geen gedwongen gevechten vóór je 2e item.`);
+    else if (d <= -3) out.push(`Jij wint KORTE games (<25 min: ${early.wr}%) beter dan lange (35+: ${late.wr}%). Druk zetten zolang je sterker bent: vroeg trades, plates, en ${lane === "jungle" ? "vroeg ganken" : "jungler erbij halen"}. Na 30 min wordt ${enemy.name} sterker.`);
+    else out.push(`Geen duidelijk vroeg/laat-voordeel (<25 min ${early.wr}%, 25-35 min ${mid?.wr ?? "?"}%, 35+ ${late.wr}%): wie minder sterft wint.`);
+  }
+  if (x.fb && x.fb.wrTake - x.fb.wrGive >= 8) {
+    out.push(`First blood weegt zwaar: pak jij hem, dan win je ${Math.round(x.fb.wrTake)}%; pakt ${enemy.name} hem, dan maar ${Math.round(x.fb.wrGive)}%. Level 1-3 niet gokken${lane === "jungle" ? "; geen invade zonder je team" : "; ward de river vóór 2:45"}.`);
+  }
+  return out;
+}
+
+function recordLine(enemy, r) {
+  if (!r) return null;
+  const n = r.w + r.l;
+  const tone = r.l > r.w ? "Speel deze lane veiliger dan normaal." : r.w > r.l ? "Doe wat je de vorige keren deed." : "";
+  return `Jouw eigen games tegen ${enemy.name}: ${r.w}W ${r.l}L (${n} game${n === 1 ? "" : "s"}), gemiddeld ${r.deaths} deaths. ${tone}`.trim();
+}
+
+function build({ me, enemy, insights, myVs, lane, counterRow, runePage, itemBuild, itemNames, itemData, team, teamBuild, spells, skills }) {
   const g = load();
   const own = g[me.lolaSlug] || g[me.slug?.toLowerCase()] || {};
   const specific = enemy ? own.vs?.[enemy.lolaSlug] : null;
@@ -67,6 +91,12 @@ function build({ me, enemy, counterRow, runePage, itemBuild, itemNames, itemData
   const sections = [];
   if (own.algemeen?.length) sections.push({ title: "Zo speel je " + me.name, items: own.algemeen });
   if (specific) sections.push({ title: "Tegen " + enemy.name, items: specific });
+  if (enemy) {
+    const facts = insightLines(me, enemy, insights, lane);
+    const rec = recordLine(enemy, myVs);
+    if (rec) facts.unshift(rec);
+    if (facts.length) sections.push({ title: "Deze matchup (data" + (insights?.n ? `, ${insights.n.toLocaleString("nl-NL")} games` : "") + ")", items: facts });
+  }
   else if (enemy && own.fallback?.length) sections.push({ title: "Tegen " + enemy.name + " (algemeen)", items: own.fallback });
 
   let situationalIds = itemBuild?.situational || [];

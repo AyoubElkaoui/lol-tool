@@ -59,7 +59,7 @@ function renderBans(s) {
   b.classList.toggle("hidden", !show);
   if (!show) return;
   const list = s.bans.list || [];
-  b.innerHTML = `<h2>Ban-advies <small>${esc(LANE_NL[s.bans.lane] || s.bans.lane)} · jouw pool: ${s.bans.pool.join(", ")} · tier ${esc(s.settings.tier)}</small></h2>
+  b.innerHTML = `<h2>Ban-advies <small>${esc(LANE_NL[s.bans.lane] || s.bans.lane)} · jouw pool: ${s.bans.pool.join(", ")} · tier ${esc(s.data?.tier || s.settings.tier)}</small></h2>
     <div class="banlist">${list.map((x, i) => `<div class="ban" data-hover="ban" data-champ="${x.cid}" title="Klik om ${esc(x.champ?.name)} als ban te hoveren"><img src="${icon(s, x.champ)}" alt="" /><div><b>${i + 1}. ${esc(x.champ?.name)}</b><small>${esc(x.parts.join(" · "))}</small></div></div>`).join("") || "<span class='wr'>Geen data</span>"}</div>
     ${s.bans.hovers?.length ? `<div class="hovers">Zij hoveren: ${s.bans.hovers.map((c) => `<img src="${icon(s, c)}" title="${esc(c.name)}" alt="" /> ${esc(c.name)}`).join(" ")}</div>` : ""}`;
 }
@@ -109,7 +109,7 @@ function renderData(s) {
   if (d) {
     const tier = { bronze: "Bronze", silver: "Silver", gold_plus: "Gold+", emerald_plus: "Emerald+" }[d.tier] || d.tier;
     const fresh = d.patch === d.latest;
-    el.textContent = `${d.patch === "30" ? "Laatste 30 dagen" : "Patch " + d.patch} · ${tier}`;
+    el.textContent = `${d.patch === "30" ? "Laatste 30 dagen" : "Patch " + d.patch} · ${tier}${d.auto ? " (auto)" : ""}`;
     el.classList.toggle("old", !fresh);
     el.title = fresh ? "Nieuwste patch" : `Patch ${d.latest} heeft nog te weinig games in deze tier; de tool schakelt vanzelf over zodra er genoeg zijn.`;
   }
@@ -270,7 +270,7 @@ function render(s) {
   st.querySelector(".txt").textContent = s.client === "verbonden" ? `Verbonden${phase ? " · " + phase : ""} · ${s.profiles?.[s.settings.profile]?.name || ""}` : "Client zoeken…";
   st.className = "status" + (s.client === "verbonden" ? " on" : "");
   for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).value = s.settings[id];
-  for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop"]) $("#" + id).checked = !!s.settings[id];
+  for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop", "overlay"]) $("#" + id).checked = !!s.settings[id];
   renderData(s); renderHero(s); renderBans(s); renderPicks(s); renderPostgame(s); renderGoals(s);
   $("#content").classList.toggle("hidden", !s.me);
   renderTeam(s); renderRunes(s); renderItems(s); renderSpells(s); renderGuide(s);
@@ -278,7 +278,7 @@ function render(s) {
 }
 
 for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.value }));
-for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.checked }));
+for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop", "overlay"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.checked }));
 $("#reapply").addEventListener("click", () => api.reapply());
 document.addEventListener("click", (e) => { const el = e.target.closest("[data-enemy]"); if (el) api.setEnemy(Number(el.dataset.enemy)); });
 document.addEventListener("click", (e) => { const el = e.target.closest("[data-hover]"); if (el) api.hover(el.dataset.hover, Number(el.dataset.champ)); });

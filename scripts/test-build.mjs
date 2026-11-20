@@ -20,7 +20,9 @@ const opts = { patch, slug, lane, tier };
 const me = bySlug(slug), laner = vs ? bySlug(vs) : null;
 const enemies = enemiesArg.split(",").filter(Boolean).map(bySlug).filter(Boolean);
 const allies = alliesArg.split(",").filter(Boolean).map(bySlug).filter(Boolean);
-const team = an.analyseTeam(enemies);
+const picks = require("../src/picks.js");
+const roles = await picks.enemyRoles({ enemyIds: enemies.map((c) => c.id), champs: await dd.champions(), patch, tier, lane });
+const team = an.analyseTeam(enemies, roles);
 
 let items = await lol.itemBuild(opts, isBoot);
 const styles = an.styles({ builds: items.allBuilds, itemData });

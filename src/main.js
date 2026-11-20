@@ -1,7 +1,7 @@
 // Electron hoofdproces: verbindt met de League-client, volgt ban/pick-fase,
 // haalt runes/items/spells/matchup op en zet alles automatisch in de client.
 
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, screen, globalShortcut } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { LcuClient } = require("./lcu");
@@ -14,6 +14,7 @@ const an = require("./analysis");
 const picks = require("./picks");
 const update = require("./update");
 const goals = require("./goals");
+const live = require("./live");
 
 const lcu = new LcuClient();
 let win = null;
@@ -28,9 +29,27 @@ const PROFILES = {
 // Pool voor de lane die je in champ select krijgt; anders de standaard-pool van het profiel.
 const poolFor = (lane) => { const p = PROFILES[settings.profile]; return p.pools?.[lane] || p.pool; };
 
+// Data van spelers op jouw niveau: lolalytics heeft bronze/silver/gold_plus/emerald_plus.
+// Iron en unranked vallen onder Bronze (Iron heeft te weinig games voor betrouwbare data).
+let myRank = null;
+const RANK_TIER = { IRON: "bronze", BRONZE: "bronze", SILVER: "silver", GOLD: "gold_plus", PLATINUM: "gold_plus", EMERALD: "emerald_plus", DIAMOND: "emerald_plus", MASTER: "emerald_plus", GRANDMASTER: "emerald_plus", CHALLENGER: "emerald_plus" };
+const tierNow = () => settings.tier && settings.tier !== "auto" ? settings.tier : RANK_TIER[myRank] || "bronze";
+async function refreshRank() {
+  try {
+    const r = await lcu.get("/lol-ranked/v1/current-ranked-stats");
+    const q = r?.queueMap?.RANKED_SOLO_5x5;
+    const t = q?.tier && q.tier !== "NONE" ? q.tier : r?.highestRankedEntrySR?.tier;
+    if (t && t !== "NONE" && t !== myRank) { myRank = t; if (settings.tier === "auto") log(`Rank ${t[0] + t.slice(1).toLowerCase()}: data van ${tierNow()}`); }
+  } catch { /* geen rank */ }
+}
+
 const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
-let settings = { profile: "ayoub", tier: "gold_plus", autoRunes: true, autoItems: true, autoSpells: false, autoHover: true, autoBan: false, autoLock: false, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d" };
-function loadSettings() { try { settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsFile(), "utf8")) }; } catch { /* defaults */ } }
+let settings = { profile: "ayoub", tier: "auto", autoRunes: true, autoItems: true, autoSpells: false, autoHover: true, autoBan: false, autoLock: false, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d", overlay: true };
+function loadSettings() {
+  try { settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsFile(), "utf8")) }; } catch { /* defaults */ }
+  // v0.1.15: oude standaard Gold+ paste niet bij jullie elo; eenmalig naar automatisch.
+  if (!settings.tierMigrated) { if (settings.tier === "gold_plus") settings.tier = "auto"; settings.tierMigrated = true; try { saveSettings(); } catch { /* later */ } }
+}
 function saveSettings() { fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2)); }
 
 const blank = () => ({
@@ -61,7 +80,17 @@ const MIN_VS_ITEM_GAMES = 200; // eerste item tegen deze tegenstander: minder ga
 const SHRINK = 100;            // winrate van een item-optie trekken we 100 games richting het gemiddelde
 let lastKey = "", lastBanKey = "", lastPickKey = "", busy = false, acceptedId = null, eogShown = null;
 
-function log(msg) { state.log = [`${new Date().toLocaleTimeString("nl-NL")}  ${msg}`, ...state.log].slice(0, 60); push(); }
+function log(msg) {
+  const line = `${new Date().toLocaleTimeString("nl-NL")}  ${msg}`;
+  state.log = [line, ...state.log].slice(0, 60); push();
+  // Ook naar een bestand, zodat we achteraf kunnen zien waarom iets misging (max ~200 kB).
+  try {
+    const f = path.join(app.getPath("userData"), "log.txt");
+    if (fs.existsSync(f) && fs.statSync(f).size > 200000) fs.renameSync(f, f + ".old");
+    fs.appendFileSync(f, `${new Date().toISOString().slice(0, 10)} ${line}
+`);
+  } catch { /* geen log */ }
+}
 function push() { if (win && !win.isDestroyed()) win.webContents.send("state", { ...state, settings, manualEnemyId }); }
 
 const LANE = { top: "top", jungle: "jungle", middle: "middle", bottom: "bottom", utility: "support" };
@@ -77,7 +106,7 @@ function orderSpells(ids) {
 }
 
 async function countersFor(slug, lane, patch) {
-  try { return (await lol.counters({ patch, slug, lane, tier: settings.tier })).list; } catch { return []; }
+  try { return (await lol.counters({ patch, slug, lane, tier: tierNow() })).list; } catch { return []; }
 }
 
 // Gebande en gekozen champions.
@@ -91,8 +120,8 @@ function takenIds(session) {
 // Patch-keuze + wat de app laat zien over de versheid van de data.
 async function refreshData() {
   const latest = await dd.lolalyticsPatch();
-  const { patch, n } = await lol.resolvePatch(latest, "irelia", "top", settings.tier);
-  state.data = { patch, latest, games: n, tier: settings.tier };
+  const { patch, n } = await lol.resolvePatch(latest, "irelia", "top", tierNow());
+  state.data = { patch, latest, games: n, tier: tierNow(), auto: settings.tier === "auto", rank: myRank };
   return patch;
 }
 
@@ -109,7 +138,7 @@ const gameCache = new Map();
 async function refreshGoals(history) {
   const me = await lcu.currentSummoner();
   const lines = [];
-  for (const g of goals.riftGames(history, 20)) {
+  for (const g of goals.riftGames(history, 40)) {
     let line = gameCache.get(g.gameId);
     if (!line) {
       try { line = goals.fromGame(await lcu.get(`/lol-match-history/v1/games/${g.gameId}`), me.puuid); } catch { line = null; }
@@ -121,10 +150,21 @@ async function refreshGoals(history) {
   const prof = PROFILES[settings.profile];
   const mainId = Object.values(champs).find((c) => c.lolaSlug === prof.favorite)?.id || null;
   const names = Object.fromEntries(Object.values(champs).map((c) => [c.id, c.name]));
+  // Eigen record per tegenstander in jouw lane (laatste 40 games): wins, losses, gem. deaths.
+  const vs = {};
+  for (const l of lines) {
+    if (!l.opp) continue;
+    const r = vs[l.opp] ||= { w: 0, l: 0, deaths: 0, champs: {} };
+    r[l.win ? "w" : "l"]++; r.deaths += l.deaths || 0;
+    const cn = champs[l.championId]?.name || "?"; r.champs[cn] = (r.champs[cn] || 0) + 1;
+  }
+  for (const r of Object.values(vs)) r.deaths = Math.round((r.deaths / (r.w + r.l)) * 10) / 10;
+  state.vsRecord = vs;
+  const recent = lines.slice(0, 20);
   state.goals = {
-    targets: goals.TARGETS, avg: goals.average(lines),
-    recent: lines.slice(0, 10).map((l) => ({ ...l, champ: champs[l.championId]?.name || "?" })),
-    analysis: goals.analysis(lines, { lane: prof.lane, mainId, names }),
+    targets: goals.TARGETS, avg: goals.average(recent),
+    recent: recent.slice(0, 10).map((l) => ({ ...l, champ: champs[l.championId]?.name || "?" })),
+    analysis: goals.analysis(recent, { lane: prof.lane, mainId, names }),
   };
   push();
 }
@@ -158,7 +198,7 @@ async function processBans(session, champs, patch) {
 // Zelf gekozen tegenstander gaat voor, zolang hij nog in hun team staat.
 async function laneEnemy(enemyIds, lane, champs, patch) {
   if (manualEnemyId && enemyIds.includes(manualEnemyId) && champs[manualEnemyId]) return champs[manualEnemyId];
-  return picks.laneOpponent({ enemyIds, lane, champs, patch, tier: settings.tier });
+  return picks.laneOpponent({ enemyIds, lane, champs, patch, tier: tierNow() });
 }
 
 async function resolveEnemyLaner(meSlug, lane, enemyIds, champs, patch) {
@@ -187,7 +227,7 @@ async function processCounterPicks(session, champs, patch) {
   if (key === lastPickKey) return;
   lastPickKey = key;
   try {
-    const opts = { lane, champs, patch, tier: settings.tier };
+    const opts = { lane, champs, patch, tier: tierNow() };
     const enemy = await laneEnemy(enemyIds, lane, champs, patch);
     const prof = PROFILES[settings.profile];
     state.picks = await picks.advice({ enemy, enemyIds: prof.teamPick ? enemyIds : [], pool, taken, favorite: prof.favorite, ...opts });
@@ -286,9 +326,12 @@ async function processPick(session, champs, patch) {
     state.enemy = laner?.champ || null;
     state.enemyManual = !!manualEnemyId && state.enemy?.id === manualEnemyId;
     if (laner && enemyChanged) log(`Tegenstander in lane: ${laner.champ.name}${laner.row ? ` (${laner.row.vsWr}% wr)` : ""}`);
-    state.team = an.analyseTeam(state.enemies);
+    let roles = {};
+    try { roles = await picks.enemyRoles({ enemyIds, champs, patch, tier: tierNow(), lane }); } catch { /* alleen tags */ }
+    state.enemyRoles = roles;
+    state.team = an.analyseTeam(state.enemies, roles);
 
-    const opts = { patch, slug, lane, tier: settings.tier };
+    const opts = { patch, slug, lane, tier: tierNow() };
     const itemData = await dd.items();
     const itemNames = Object.fromEntries(Object.values(itemData).map((i) => [i.id, i.name]));
     const itemGold = Object.fromEntries(Object.values(itemData).map((i) => [i.id, i.gold]));
@@ -300,7 +343,7 @@ async function processPick(session, champs, patch) {
       runes = await lol.runePages(opts);
       items = await lol.itemBuild(opts, isBoot);
       baseItems = items;
-      try { u = await ugg.overview({ patch: await dd.lolalyticsPatch(), championId: me.id, lane, tier: settings.tier }); }
+      try { u = await ugg.overview({ patch: await dd.lolalyticsPatch(), championId: me.id, lane, tier: tierNow() }); }
       catch (e) { u = null; log("u.gg (spells/skills) niet beschikbaar: " + e.message); }
       items.starters = u?.starters?.length ? u.starters : fallbackStarters(me, lane);
       items.core = fillBuild(items.core, u?.itemOptions);
@@ -375,7 +418,10 @@ async function processPick(session, champs, patch) {
     // Matchup-laag: team-build, guide, situationele items (verandert als tegenstanders bijkomen).
     const tb = an.teamBuild({ me, core: items.core, situational: items.situational, options: vsOptions || u?.itemOptions, itemData, team: state.team, laner: state.enemy, defaultBoot: items.boot, isBoot, style: items.style?.key });
     state.teamBuild = { ...tb, bootsName: itemNames[tb.boots.id] };
-    state.guide = guide.build({ me, enemy: state.enemy, counterRow: laner?.row || null, runePage: runes.pages[activeRuneIdx(runes.pages)], itemBuild: items, itemNames, itemData, team: state.team, teamBuild: state.teamBuild, spells: state.spells, skills: state.skills });
+    let insights = null;
+    if (state.enemy) { try { insights = await lol.vsInsights({ ...opts, vs: state.enemy.lolaSlug }); } catch { /* geen matchup-data */ } }
+    const myVs = state.enemy ? state.vsRecord?.[state.enemy.id] || null : null;
+    state.guide = guide.build({ me, enemy: state.enemy, insights, myVs, lane, counterRow: laner?.row || null, runePage: runes.pages[activeRuneIdx(runes.pages)], itemBuild: items, itemNames, itemData, team: state.team, teamBuild: state.teamBuild, spells: state.spells, skills: state.skills });
     state.items = { ...items, allBuilds: undefined, styles: undefined, situational: state.guide.situationalIds || items.situational, names: itemNames, gold: itemGold, itemUrl: urls.item("").replace(/\.png$/, ""), options: vsOptions || u?.itemOptions || null, buildIdx: pickedBuild ? buildIdx : null };
     state.runeIdx = activeRuneIdx(runes.pages);
     push();
@@ -406,10 +452,11 @@ async function processPick(session, champs, patch) {
 const myAction = (session, type) => (session.actions || []).flat().find((a) => a.type === type && a.actorCellId === session.localPlayerCellId && !a.completed);
 const hoverChamp = (action, championId) => lcu.patch(`/lol-champ-select/v1/session/actions/${action.id}`, { championId });
 
+let autoTriedAt = 0;
 async function tryHover(action, championId, label) {
   const attempt = `${action.id}:${championId}`;
-  if (attempt === autoTried) return false; // niet elke tick opnieuw proberen als de client weigert
-  autoTried = attempt;
+  if (attempt === autoTried && Date.now() - autoTriedAt < 3000) return false; // niet elke tick opnieuw als de client weigert
+  autoTried = attempt; autoTriedAt = Date.now();
   try { await hoverChamp(action, championId); log(label); return true; }
   catch (e) { log(`Hoveren mislukt: ${e.message}`); return false; }
 }
@@ -470,17 +517,29 @@ async function completeAction(action, championId) {
   catch { await lcu.patch(url, { championId, completed: true }); }
 }
 
+let lockTriedAt = 0, lockDebugged = "";
 async function autoLock(session, champs) {
-  if (timeLeft(session.timer) > LOCK_AT_MS) return;
+  const left = timeLeft(session.timer);
+  // Eén keer per beurt loggen wat de tool ziet, zodat een mislukte lock te verklaren is.
+  for (const type of ["ban", "pick"]) {
+    const a = myAction(session, type);
+    if (a?.isInProgress && lockDebugged !== `${a.id}`) { lockDebugged = `${a.id}`; log(`Jouw ${type}-beurt: ${Number.isFinite(left) ? Math.round(left / 1000) + "s" : "geen timer"}, fase ${session.timer?.phase || "?"}, gehoverd ${champs[a.championId]?.name || "niets"}`); }
+  }
+  if (left > LOCK_AT_MS) return;
+  const taken = takenIds(session);
   for (const type of ["ban", "pick"]) {
     if (!(type === "ban" ? settings.autoBan : settings.autoLock)) continue;
     const action = myAction(session, type);
     if (!action?.isInProgress) continue;
-    const championId = action.championId || (type === "ban" ? bestBan(session) : bestPick());
-    if (!championId) continue;
+    // Gehoverde champ die intussen gebanned/gepakt is kan niet meer: dan de beste vrije.
+    let championId = action.championId;
+    if (!championId || (type === "pick" && taken.has(championId) && !(session.myTeam || []).some((p) => p.cellId === session.localPlayerCellId && p.championId === championId))) {
+      championId = type === "ban" ? bestBan(session) : bestPick();
+    }
+    if (!championId) { if (lockTried !== `${action.id}:none`) { lockTried = `${action.id}:none`; log(`Auto ${type}: geen champ om te ${type === "ban" ? "bannen" : "locken"} (data nog niet geladen?)`); } continue; }
     const attempt = `${action.id}:${championId}`;
-    if (attempt === lockTried) continue; // client weigerde: niet elke tick opnieuw
-    lockTried = attempt;
+    if (attempt === lockTried && Date.now() - lockTriedAt < 1500) continue; // client weigerde: even wachten
+    lockTried = attempt; lockTriedAt = Date.now();
     const name = champs[championId]?.name || championId;
     try {
       await completeAction(action, championId);
@@ -491,12 +550,13 @@ async function autoLock(session, champs) {
 
 async function processChampSelect(session) {
   const champs = await dd.champions();
-  if (settings.tier === "all") settings.tier = "gold_plus";
+  if (settings.tier === "all") settings.tier = "auto";
   const patch = await refreshData();
   if (!state.champUrl) { const urls = await dd.imageUrls(); state.champUrl = urls.champion(""); }
   const actions = (session.actions || []).flat();
   const bansOpen = actions.some((a) => a.type === "ban" && !a.completed);
-  const inBan = session.timer?.phase === "PLANNING" || (session.timer?.phase === "BAN_PICK" && bansOpen);
+  const myBan = actions.find((a) => a.type === "ban" && a.actorCellId === session.localPlayerCellId);
+  const inBan = session.timer?.phase === "PLANNING" || (bansOpen && (session.timer?.phase === "BAN_PICK" || !session.timer?.phase || !!myBan?.isInProgress));
   if (inBan !== state.inBan) { state.inBan = inBan; push(); }
   // Hun team (ook gehoverd) voor de tegenstander-kiezer in de app.
   const theirIds = (session.theirTeam || []).map((p) => p.championId || p.championPickIntent || 0).filter((x) => x > 0);
@@ -542,12 +602,61 @@ async function processEndOfGame() {
   } catch { /* geen eog-data */ }
 }
 
+// ---------- in-game overlay ----------
+// Klein, doorklikbaar paneel rechts in beeld. Werkt alleen als League in "Borderless" of
+// "Windowed" staat (bij echt fullscreen tekent Windows niets over de game heen).
+// Ctrl+Shift+L zet hem aan/uit.
+let overlay = null, overlayHidden = false, liveBusy = false, liveFails = 0;
+function ensureOverlay() {
+  if (overlay && !overlay.isDestroyed()) return overlay;
+  const wa = screen.getPrimaryDisplay().bounds;
+  const w = 320, h = 320;
+  overlay = new BrowserWindow({
+    width: w, height: h, x: wa.x + wa.width - w - 12, y: wa.y + Math.round(wa.height * 0.28),
+    frame: false, transparent: true, resizable: false, movable: false, focusable: false, skipTaskbar: true,
+    alwaysOnTop: true, hasShadow: false, show: false,
+    webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false },
+  });
+  overlay.setAlwaysOnTop(true, "screen-saver");
+  overlay.setIgnoreMouseEvents(true);
+  overlay.setVisibleOnAllWorkspaces?.(true, { visibleOnFullScreen: true });
+  overlay.loadFile(path.join(__dirname, "overlay", "overlay.html"));
+  overlay.on("closed", () => { overlay = null; });
+  return overlay;
+}
+function hideOverlay() { if (overlay && !overlay.isDestroyed()) overlay.hide(); }
+
+async function liveTick() {
+  if (liveBusy) return;
+  if (!settings.overlay || overlayHidden || state.phase !== "InProgress") { hideOverlay(); return; }
+  liveBusy = true;
+  try {
+    const d = await live.allGameData();
+    liveFails = 0;
+    const [itemData, champs, urls] = await Promise.all([dd.items(), dd.champions(), dd.imageUrls()]);
+    const opts = state.items?.options || {};
+    const plan = {
+      build: state.teamBuild?.build || state.items?.core || [],
+      extra: [...(state.items?.situational || []), ...[4, 5, 6].flatMap((k) => (opts[k] || []).map((o) => o.id))],
+    };
+    const view = live.analyse(d, { itemData, champs, plan, targets: goals.TARGETS });
+    const o = ensureOverlay();
+    if (view) {
+      o.webContents.send("live", { ...view, itemUrl: urls.item("").replace(/\.png$/, ""), champUrl: urls.champion("") });
+      if (!o.isVisible()) o.showInactive();
+    }
+  } catch {
+    // Laadscherm of game net klaar: API nog/niet meer bereikbaar.
+    if (++liveFails > 3) hideOverlay();
+  } finally { liveBusy = false; }
+}
+
 // ---------- hoofdlus ----------
 async function tick() {
   if (!lcu.connected) {
     const ok = await lcu.connect();
     state.client = ok ? "verbonden" : "zoeken";
-    if (ok) { log("Verbonden met League-client"); refreshMyStats(); }
+    if (ok) { log("Verbonden met League-client"); refreshMyStats(); refreshRank().then(() => refreshData()).then(push).catch(() => {}); }
     push();
     if (!ok) return;
   }
@@ -578,7 +687,7 @@ function createWindow() {
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, "renderer", "index.html"));
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: "deny" }; });
-  win.on("closed", () => { win = null; });
+  win.on("closed", () => { win = null; if (overlay && !overlay.isDestroyed()) overlay.destroy(); });
 }
 
 ipcMain.handle("get-state", () => ({ ...state, settings, manualEnemyId }));
@@ -630,8 +739,13 @@ app.whenReady().then(async () => {
   checkUpdate();
   setInterval(() => tick().catch((e) => log("tick: " + e.message)), 1500);
   setInterval(() => lockTick(), 500);
+  setInterval(() => liveTick(), 2000);
+  try {
+    globalShortcut.register("CommandOrControl+Shift+L", () => { overlayHidden = !overlayHidden; if (overlayHidden) hideOverlay(); log(overlayHidden ? "Overlay verborgen (Ctrl+Shift+L)" : "Overlay weer aan"); });
+  } catch { /* sneltoets bezet */ }
   setInterval(() => refreshData().then(push).catch(() => {}), 60 * 60 * 1000);
   setInterval(checkUpdate, 6 * 60 * 60 * 1000);
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
+app.on("will-quit", () => { try { globalShortcut.unregisterAll(); } catch { /* ok */ } });
 app.on("window-all-closed", () => { app.quit(); });

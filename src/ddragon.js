@@ -49,11 +49,11 @@ async function lolalyticsPatch() {
 async function champions() {
   if (mem.champions) return mem.champions;
   const v = await version();
-  const data = await cached(`champions-${v}.json`, async () => {
+  const data = await cached(`champions2-${v}.json`, async () => {
     const d = await fetchJson(`${BASE}/cdn/${v}/data/en_US/champion.json`);
     const byKey = {};
     for (const c of Object.values(d.data)) {
-      byKey[Number(c.key)] = { id: Number(c.key), name: c.name, slug: c.id, image: c.image.full, tags: c.tags || [], partype: c.partype || "" };
+      byKey[Number(c.key)] = { id: Number(c.key), name: c.name, slug: c.id, image: c.image.full, tags: c.tags || [], partype: c.partype || "", info: c.info || null };
     }
     return byKey;
   });

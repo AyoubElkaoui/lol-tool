@@ -194,7 +194,94 @@
     ],
     "fallback": [
       "Farm met Q, speel veilig tot 2 items en help de map met R."
-    ]
+    ],
+    "vs": {
+      "darius": [
+        "Start Doran's Shield. Nooit in zijn E-range (pull) gaan staan om te farmen: last-hit alleen met Q van afstand.",
+        "Laat hem nooit 5 stacks (bloeding) opbouwen: na 2-3 auto's van hem weglopen. Je W haalt de slow van zijn W en zijn E weg, gebruik hem om weg te komen.",
+        "Hij is sterk tot ongeveer 2 items. Daarna wint jij met barrels + crit. Bel je jungler: Darius heeft geen escape behalve Flash."
+      ],
+      "sett": [
+        "Start Doran's Shield. Ontwijk zijn E (trekt je naar hem toe en stunt) door niet tussen hem en een muur te staan.",
+        "Zijn W (grote shield + true damage in het midden) komt als zijn grijze balk vol is: loop dan even weg, kom terug als hij hem gebruikt heeft.",
+        "Kort trades met Q, nooit lang staan vechten. Na Essence Reaver + Collector ben jij sterker."
+      ],
+      "garen": [
+        "Garen krijgt leven terug als hij een paar seconden geen damage neemt: blijf hem met Q prikken, dan healt hij niet.",
+        "Zijn Q (silence) + E (draaien) is zijn hele combo. Ga bij zijn Q naar achteren, W haalt de silence niet weg maar hij zit dan wel op cooldown.",
+        "Je wint deze lane vaak: speel agressief met Q en barrels zodra hij in de wave staat."
+      ],
+      "yorick": [
+        "Sla zijn ghouls en maiden met barrels: één ton in zijn ghouls ruimt ze allemaal op.",
+        "Zijn E (cage) sluit je in: W haalt de slow weg, loop er niet in als zijn ghouls er nog staan.",
+        "Hij splitpusht later hard: hou je tonnen klaar bij de wave en pak plates zolang je kunt. Je wint dit door zijn summons te killen, niet door hem zelf."
+      ],
+      "fiora": [
+        "Fiora is volgens de data een van je beste matchups. Prik met Q, zij moet naar je toe lopen.",
+        "Haar W (riposte) blokt je Q en barrel-slow en stunt jou als je haar slowt: wacht met tonnen tot ze W gebruikt heeft.",
+        "Ze wint lange 1v1's laat; na 25 min samen met je team vechten, niet alleen tegen haar sidelanen."
+      ],
+      "mordekaiser": [
+        "Zijn Q (slag in een lijn) doet veel: sta niet in een rechte lijn voor hem.",
+        "Hou je Q-poke kort; zijn passief stapelt als hij lang naast je staat.",
+        "Zijn R (death realm) haalt jou 1v1 weg: hou Flash/W of loop naar je toren als hij 6 is. Koop vroeg een Quicksilver als hij je steeds pakt."
+      ],
+      "malphite": [
+        "Malphite prikt met Q en is na zijn armor-items heel taai. Lord Dominik's is hier echt nodig.",
+        "Hij doet weinig damage in lane; farm rustig, laat hem niet je wave dichtduwen.",
+        "Zijn R in teamfights is het gevaar: ga niet vooraan staan in een groepje."
+      ],
+      "nasus": [
+        "Nasus moet stacks farmen met Q. Stoor hem: Q hem elke keer dat hij een minion wil pakken.",
+        "Na 6 (wither + R) wint hij korte gevechten; loop weg als hij W (slow) gebruikt.",
+        "Hoe langer de game, hoe sterker hij. Pak plates en zijn toren vroeg, help daarna met R op de map."
+      ],
+      "teemo": [
+        "Teemo's Q (blind) stopt je auto's maar niet je Q; je last-hit gewoon door.",
+        "Koop een Control Ward en een paar Oracle-sweeps later voor zijn paddenstoelen.",
+        "Vechten tegen hem is makkelijk als hij in je tonnen staat: zet barrels tussen de minions."
+      ],
+      "jax": [
+        "Jax' E (counter strike) blokt alle auto-aanvallen, ook je Q. Wacht tot hij E gebruikt heeft voor je trade.",
+        "Na 2 items wint hij lange gevechten. Speel kort, prik met barrels.",
+        "Bel je jungler op niveau 3-5: Jax springt naar je toe en staat dan dicht bij jouw toren."
+      ],
+      "renekton": [
+        "Renekton is vroeg heel sterk: niet trades aangaan level 1-5 als hij fury heeft (rode balk).",
+        "Zijn E2 (dash terug) maakt hem moeilijk te vangen; gebruik barrels als hij net weg-dasht.",
+        "Na level 9 en 2 items valt hij af. Overleef de lane, dan win jij."
+      ],
+      "aatrox": [
+        "Ontwijk zijn Q's (3 slagen); het randje van elke Q doet het meeste damage.",
+        "Mortal Reminder of vroeg Executioner's als hij veel healt.",
+        "Loop weg zodra hij R gebruikt; kom terug als die voorbij is."
+      ],
+      "illaoi": [
+        "Illaoi's E (trekt je geest eruit) moet je ontwijken: verstop achter minions.",
+        "Vecht nooit in haar tentakels; trek haar weg van de tentakels met Q-poke.",
+        "Als ze R gebruikt: weglopen, niet blijven staan."
+      ],
+      "drmundo": [
+        "Mundo is een van je lastigste matchups: hij healt veel en jij doet weinig tot je items hebt.",
+        "Koop vroeg anti-heal (Executioner's Calling → Mortal Reminder).",
+        "Farm, help de map met R en laat hem toptoren duwen als je team elders iets wint."
+      ],
+      "tahmkench": [
+        "Tahm stapelt zijn passief met auto's: kort trades met Q, niet naast hem blijven staan.",
+        "Na 3 stacks kan hij je opeten (W): ga weg zodra je 2 stacks hebt.",
+        "Hij is taai: Lord Dominik's als 2e/3e item."
+      ],
+      "quinn": [
+        "Quinn is ranged en prikt veel: je verliest trades, dus alleen last-hitten met Q.",
+        "Doran's Shield + Second Wind helpen. Wacht op je jungler, zij heeft weinig escape behalve E (wegspringen).",
+        "Ze gaat roamen met R: ping je team als ze uit lane is."
+      ],
+      "chogath": [
+        "Cho'Gath's Q (knock-up) zie je op de grond: loop er altijd uit.",
+        "Hij doet weinig damage zonder R; je kunt hem prikken met Q.",
+        "Op 6 doet zijn R true damage: niet laag in zijn buurt staan."
+      ]
+    }
   },
   "tahmkench": {
     "algemeen": [
