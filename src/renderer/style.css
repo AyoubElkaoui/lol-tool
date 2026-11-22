@@ -223,3 +223,11 @@ main { padding: 18px; max-width: 1140px; width: 100%; margin: 0 auto; display: g
 .decide td.good { color: var(--good); font-weight: 700; } .decide td.bad { color: var(--bad); font-weight: 700; }
 .opps { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; }
 .opps .bad { color: var(--bad); } .opps .good { color: var(--good); }
+
+.tiltbar { margin: 0 0 12px; padding: 10px 14px; border-radius: 4px; background: rgba(200,170,110,.12); border: 1px solid #785a28; color: #f0e6d2; }
+.tiltbar.hard { background: rgba(255,107,94,.12); border-color: #ff6b5e; }
+.tiltbar b { color: #c8aa6e; }
+.tiltbar.hard b { color: #ff6b5e; }
+.field input[type=text] { width: 100%; box-sizing: border-box; background: var(--bg2); color: var(--text); border: 1px solid var(--line2); border-radius: 6px; padding: 7px 8px; font: inherit; }
+.field small, .hint { color: var(--muted); }
+.field small { font-weight: 400; }

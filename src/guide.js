@@ -77,7 +77,14 @@ function recordLine(enemy, r) {
   return `Jouw eigen games tegen ${enemy.name}: ${r.w}W ${r.l}L (${n} game${n === 1 ? "" : "s"}), gemiddeld ${r.deaths} deaths. ${tone}`.trim();
 }
 
-function build({ me, enemy, insights, myVs, lane, counterRow, runePage, itemBuild, itemNames, itemData, team, teamBuild, spells, skills }) {
+// "Samen met je duo": algemene tips voor jouw champ + tips voor jouw champ met zijn champ.
+function duoLines(g, me, duo) {
+  if (!duo) return [];
+  const own = g.duo?.[me.lolaSlug] || {};
+  return [...(own["*"] || []), ...(duo.champ ? own[duo.champ.lolaSlug] || [] : [])].map((t) => t.replaceAll("{duo}", duo.name));
+}
+
+function build({ duo = null, me, enemy, insights, myVs, lane, counterRow, runePage, itemBuild, itemNames, itemData, team, teamBuild, spells, skills }) {
   const g = load();
   const own = g[me.lolaSlug] || g[me.slug?.toLowerCase()] || {};
   const specific = enemy ? own.vs?.[enemy.lolaSlug] : null;
@@ -91,6 +98,8 @@ function build({ me, enemy, insights, myVs, lane, counterRow, runePage, itemBuil
   const sections = [];
   if (own.algemeen?.length) sections.push({ title: "Zo speel je " + me.name, items: own.algemeen });
   if (specific) sections.push({ title: "Tegen " + enemy.name, items: specific });
+  const together = duoLines(g, me, duo);
+  if (together.length) sections.push({ title: `Samen met ${duo.name}${duo.champ ? ` (${duo.champ.name})` : ""}`, items: together });
   if (enemy) {
     const facts = insightLines(me, enemy, insights, lane);
     const rec = recordLine(enemy, myVs);

@@ -97,57 +97,88 @@ async function vsTeam({ slug, enemyIds, laneEnemyId, lane, patch, tier, champs }
   return { wr, n: vs.reduce((s, v) => s + v.n, 0), vs };
 }
 
-// Bij twijfel (geen data of binnen DOUBT van de beste) gaat de voorkeurs-champ bovenaan.
-function rank(rows, favorite) {
+// Volgorde van de pool:
+// - one-trick (oneTrick): de main staat altijd bovenaan zolang hij vrij is, wat de winrate ook is.
+// - comp-keuze (comp): past een champ uit je pool beter bij hun team (Malphite tegen veel AD),
+//   dan wordt hij de voorkeur, met een ruimere marge (COMP_DOUBT) dan de gewone voorkeur.
+// - anders: bij twijfel (geen data of binnen DOUBT van de beste) gaat de voorkeurs-champ bovenaan.
+// Backups (backup: true) komen pas als de pool zelf weg is.
+const COMP_DOUBT = 3.0;
+function rank(rows, favorite, { oneTrick = false, comp = null, compStrict = false } = {}) {
   const byWr = (a, b) => (b.wr ?? -1) - (a.wr ?? -1);
-  rows.sort(byWr);
-  if (!favorite) return rows;
-  const fav = rows.find((r) => r.champ.lolaSlug === favorite && !r.taken);
-  const top = rows.find((r) => !r.taken && r.wr != null);
-  if (fav && (!top || fav.wr == null || top.wr - fav.wr <= DOUBT)) {
+  const main = rows.filter((r) => !r.backup).sort(byWr);
+  const backups = rows.filter((r) => r.backup).sort(byWr);
+  const pref = comp?.slug && main.some((r) => r.champ.lolaSlug === comp.slug && !r.taken) ? comp.slug : favorite;
+  const fav = pref ? main.find((r) => r.champ.lolaSlug === pref && !r.taken) : null;
+  const top = main.find((r) => !r.taken && r.wr != null);
+  // compStrict: de comp-regel beslist altijd (Ayoub: AD-team = Irelia, AP-team = Galio).
+  const margin = pref === comp?.slug && comp ? (compStrict ? Infinity : COMP_DOUBT) : DOUBT;
+  if (fav && (oneTrick || !top || fav.wr == null || top.wr - fav.wr <= margin)) {
     fav.favorite = true;
-    rows.splice(rows.indexOf(fav), 1);
-    rows.unshift(fav);
+    if (pref === comp?.slug) fav.compWhy = comp.why;
+    main.splice(main.indexOf(fav), 1);
+    main.unshift(fav);
   }
-  return rows;
+  const out = [...main, ...backups];
+  // De rij die de tool zou hoveren/aanraden: eerst de pool, dan de backups.
+  const pick = (fav && !fav.taken ? fav : null) || main.find((r) => !r.taken && r.wr != null) || main.find((r) => !r.taken)
+    || backups.find((r) => !r.taken && r.wr != null) || backups.find((r) => !r.taken);
+  if (pick) pick.pick = true;
+  return out;
+}
+
+// Welke champ uit je pool past het best bij hun team? rules: [{ slug, when: "ad" | "ap" | "cc", why }].
+// "ad": hun team (met de tegenstander in jouw lane dubbel) doet duidelijk vooral AD-damage.
+function compChoice(rules, enemies, laner, dmgType) {
+  if (!rules?.length || !enemies?.length) return null;
+  const types = enemies.map((c) => dmgType(c));
+  const lane = laner ? dmgType(laner) : null;
+  const ad = types.filter((t) => t === "AD").length + (lane === "AD" ? 1 : 0);
+  const ap = types.filter((t) => t === "AP").length + (lane === "AP" ? 1 : 0);
+  for (const r of rules) {
+    if (r.when === "ad" && ad >= 3 && ad >= ap + 2) return { slug: r.slug, why: r.why || `${ad - (lane === "AD" ? 1 : 0)} AD-champions bij hen` };
+    if (r.when === "ap" && ap >= 3 && ap >= ad + 2) return { slug: r.slug, why: r.why || `${ap - (lane === "AP" ? 1 : 0)} AP-champions bij hen` };
+  }
+  return null;
 }
 
 // Tegenstanders bekend: jouw pool gescoord tegen het hele bekende team; bij een bekende
 // tegenstander in jouw lane ook de 5 beste champs in die lane tegen hem.
-async function counterAdvice({ enemy, enemyIds, lane, pool, taken, champs, patch, tier, favorite }) {
+async function counterAdvice({ enemy, enemyIds, lane, pool, backups = [], taken, champs, patch, tier, favorite, oneTrick, compRules, compStrict, dmgType }) {
   const opts = { lane, patch, tier };
   const ids = enemyIds?.length ? enemyIds : [enemy.id];
-  const poolRows = await Promise.all(pool.map(async (c) => {
+  const poolRows = await Promise.all([...pool.map((c) => [c, false]), ...backups.map((c) => [c, true])].map(async ([c, backup]) => {
     const t = await vsTeam({ ...opts, slug: c.lolaSlug, enemyIds: ids, laneEnemyId: enemy?.id, champs });
     const laneRow = t.vs.find((v) => v.laner);
-    return { champ: c, taken: taken.has(c.id), wr: t.wr, n: t.n, vs: t.vs, laneWr: laneRow?.wr ?? null };
+    return { champ: c, backup, taken: taken.has(c.id), wr: t.wr, n: t.n, vs: t.vs, laneWr: laneRow?.wr ?? null };
   }));
+  const comp = dmgType ? compChoice(compRules, ids.map((id) => champs[id]).filter(Boolean), enemy, dmgType) : null;
   let best = [];
   if (enemy) {
     const { list } = await lol.counters({ ...opts, slug: enemy.lolaSlug });
-    const inPool = new Set(pool.map((c) => c.id));
+    const inPool = new Set([...pool, ...backups].map((c) => c.id));
     const candidates = list
       .filter((r) => r.defaultLane === lane && r.n >= MIN_GAMES && !taken.has(r.cid) && !inPool.has(r.cid) && champs[r.cid])
       .sort((a, b) => a.vsWr - b.vsWr).slice(0, CANDIDATES);
     best = await Promise.all(candidates.map(async (r) => ({ champ: champs[r.cid], ...((await vsEnemy({ ...opts, slug: champs[r.cid].lolaSlug, enemyId: enemy.id })) || { wr: round1(100 - r.vsWr), n: r.n }) })));
     best = best.sort((a, b) => (b.wr ?? -1) - (a.wr ?? -1)).slice(0, SHOW);
   }
-  return { mode: "counter", lane, enemy: enemy || null, enemies: ids.map((id) => champs[id]).filter(Boolean), pool: rank(poolRows, favorite), best };
+  return { mode: "counter", lane, enemy: enemy || null, enemies: ids.map((id) => champs[id]).filter(Boolean), pool: rank(poolRows, favorite, { oneTrick, comp, compStrict }), best, comp };
 }
 
 // Geen tegenstander bekend: verwachte winrate over alle matchups in de lane, gewogen
 // naar hoe vaak je ze tegenkomt, plus de matchups waar je het meest van moet vrezen.
-async function blindAdvice({ lane, pool, taken, champs, patch, tier, favorite }) {
-  const rows = await Promise.all(pool.map(async (c) => {
+async function blindAdvice({ lane, pool, backups = [], taken, champs, patch, tier, favorite, oneTrick }) {
+  const rows = await Promise.all([...pool.map((c) => [c, false]), ...backups.map((c) => [c, true])].map(async ([c, backup]) => {
     let list = [];
     try { list = (await lol.counters({ patch, slug: c.lolaSlug, lane, tier })).list; } catch { /* lege rij */ }
     const matchups = list.filter((r) => r.defaultLane === lane && r.n >= MIN_GAMES);
     const games = matchups.reduce((s, r) => s + r.n, 0);
     const wr = games ? round1(matchups.reduce((s, r) => s + r.vsWr * r.n, 0) / games) : null;
     const worst = [...matchups].sort((a, b) => a.vsWr - b.vsWr).slice(0, 3).map((r) => ({ name: champs[r.cid]?.name || "?", wr: r.vsWr }));
-    return { champ: c, taken: taken.has(c.id), wr, n: games, worst };
+    return { champ: c, backup, taken: taken.has(c.id), wr, n: games, worst };
   }));
-  return { mode: "blind", lane, enemy: null, pool: rank(rows, favorite), best: [] };
+  return { mode: "blind", lane, enemy: null, pool: rank(rows, favorite, { oneTrick }), best: [] };
 }
 
 async function advice({ enemy, enemyIds, ...rest }) {
@@ -169,4 +200,4 @@ function myStats(history) {
   return out;
 }
 
-module.exports = { laneOpponent, enemyRoles, assignLanes, advice, myStats };
+module.exports = { laneOpponent, enemyRoles, assignLanes, advice, myStats, rank, compChoice };

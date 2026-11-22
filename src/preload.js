@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld("lolTool", {
   chooseRunes: (idx) => ipcRenderer.invoke("choose-runes", idx),
   chooseBuild: (idx) => ipcRenderer.invoke("choose-build", idx),
   setEnemy: (id) => ipcRenderer.invoke("set-enemy", id),
+  setPool: (arg) => ipcRenderer.invoke("set-pool", arg),
+  setDuo: (arg) => ipcRenderer.invoke("set-duo", arg),
   onState: (cb) => ipcRenderer.on("state", (_e, s) => cb(s)),
   onLive: (cb) => ipcRenderer.on("live", (_e, d) => cb(d)),
 });

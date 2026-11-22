@@ -22,10 +22,20 @@
       <h3>Instellingen</h3>
       <label class="field"><span>Profiel</span>
         <select id="profile">
-          <option value="ayoub">Ayoub (jungle: Rengar · anders counter pick)</option>
-          <option value="danny">Danny (top: Gangplank)</option>
+          <option value="ayoub">Ayoub (mid: Galio tegen AP · Irelia tegen AD)</option>
+          <option value="danny">Danny (jungle: alleen Shaco)</option>
         </select>
       </label>
+      <label class="field"><span>Champion pool <small>(eerste = main, komma's ertussen)</small></span>
+        <input id="poolText" type="text" placeholder="Galio, Irelia" spellcheck="false" />
+      </label>
+      <label class="field"><span>Backups <small>(alleen als je pool gebanned/gepakt is)</small></span>
+        <input id="backupsText" type="text" placeholder="Rengar, Kha'Zix" spellcheck="false" />
+      </label>
+      <label class="field"><span>Duo <small>(Riot-naam, het begin is genoeg)</small></span>
+        <input id="duoName" type="text" placeholder="EversD" spellcheck="false" />
+      </label>
+      <p id="poolMsg" class="hint"></p>
       <label class="field"><span>Data van tier</span>
         <select id="tier">
           <option value="auto">Automatisch (jouw rank)</option>
@@ -56,11 +66,24 @@
       <label class="switch"><input type="checkbox" id="autoAccept" /><span>Ready check automatisch accepteren</span></label>
       <label class="switch"><input type="checkbox" id="alwaysOnTop" /><span>Venster altijd bovenaan</span></label>
       <label class="switch"><input type="checkbox" id="overlay" /><span>Overlay in de game (Ctrl+Shift+L aan/uit; League op Borderless zetten)</span></label>
+      <label class="field"><span>Overlay-positie</span>
+        <select id="overlayPos">
+          <option value="right">Rechts, midden</option>
+          <option value="left">Links, midden</option>
+          <option value="topright">Rechtsboven</option>
+          <option value="topleft">Linksboven</option>
+        </select>
+      </label>
+      <label class="switch"><input type="checkbox" id="overlayCompact" /><span>Overlay compact (alleen doelen en meldingen)</span></label>
+      <label class="switch"><input type="checkbox" id="overlayDuo" /><span>Overlay: je duo (level, voorsprong, wanneer samen spelen)</span></label>
+      <label class="switch"><input type="checkbox" id="overlaySpikes" /><span>Overlay: power spikes (level 6, items af)</span></label>
+      <label class="switch"><input type="checkbox" id="overlayCoach" /><span>Overlay: coach (anti-tilt, control wards, vision)</span></label>
       <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen sets blijven staan. Automatisch bannen/locken staat standaard uit. Wat de tool doet staat ook in log.txt (map %APPDATA%\LoL Tool). Aan: de tool wacht tot de laatste 8 seconden van je beurt en bant/lockt wat er gehoverd staat; hover je zelf iets, dan wordt dát het.</p>
     </aside>
 
     <main id="main">
       <a id="update" class="updatebar hidden" target="_blank" rel="noreferrer"></a>
+      <div id="tilt" class="tiltbar hidden"></div>
       <section id="hero" class="hero idle">
         <div class="hero-inner">
           <div class="idle-art"></div>

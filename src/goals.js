@@ -8,11 +8,33 @@ const TARGETS = {
   cw: { min: 1, label: "Control wards", unit: "", hint: "1+ per game" },
   csm: { min: 6.5, label: "CS/min", unit: "", hint: "6,5+" },
 };
+
+// Doelen per lane: een jungler farmt minder maar moet bij meer gevechten zijn, een mid laner
+// farmt meer. Haalbaar in Iron-Gold, niet de pro-norm. vpm = vision score per minuut.
+const nlNum = (v) => String(v).replace(".", ",");
+const LANE_GOALS = {
+  jungle: { kp: 60, csm: 5.5, vpm: 0.9 },
+  middle: { kp: 55, csm: 7, vpm: 0.6 },
+  top: { kp: 45, csm: 6.5, vpm: 0.5 },
+  bottom: { kp: 55, csm: 7.5, vpm: 0.5 },
+  support: { kp: 60, csm: 0, vpm: 1.5 },
+};
+function targetsFor(lane) {
+  const g = LANE_GOALS[lane];
+  if (!g) return TARGETS;
+  return {
+    deaths: TARGETS.deaths,
+    kp: { ...TARGETS.kp, min: g.kp, hint: `${g.kp}%+` },
+    cw: TARGETS.cw,
+    csm: { ...TARGETS.csm, min: g.csm, hint: `${nlNum(g.csm)}+` },
+  };
+}
+const vpmTarget = (lane) => LANE_GOALS[lane]?.vpm ?? 0.8;
 const RIFT_QUEUES = new Set([400, 420, 430, 440, 490]);
 const MIN_SECONDS = 300; // remakes tellen niet mee
 
 const round1 = (x) => Math.round(x * 10) / 10;
-const ok = (key, v) => v == null ? null : TARGETS[key].max != null ? v <= TARGETS[key].max : v >= TARGETS[key].min;
+const ok = (key, v, T = TARGETS) => v == null ? null : T[key].max != null ? v <= T[key].max : v >= T[key].min;
 
 function line({ kills, deaths, assists, teamKills, cs, cw, seconds }) {
   const mins = Math.max(1, seconds / 60);
@@ -69,7 +91,7 @@ function fromGame(game, puuid) {
   const theirs = (game.teams || []).find((t) => t.teamId !== me.teamId) || {};
   return {
     ...line({ kills: st.kills || 0, deaths: st.deaths || 0, assists: st.assists || 0, teamKills, cs: (st.totalMinionsKilled || 0) + (st.neutralMinionsKilled || 0), cw: st.visionWardsBoughtInGame, seconds: game.gameDuration || 0 }),
-    gameId: game.gameId, championId: me.championId, win: !!st.win,
+    gameId: game.gameId, created: game.gameCreation || null, championId: me.championId, win: !!st.win,
     dmgShare: teamDmg > 0 ? Math.round(((st.totalDamageDealtToChampions || 0) / teamDmg) * 100) : null,
     vpm: round1((st.visionScore || 0) / mins),
     drakes: ours.dragonKills ?? null, enemyDrakes: theirs.dragonKills ?? null,
@@ -87,21 +109,23 @@ function riftGames(history, limit = 20) {
     .slice(0, limit);
 }
 
-function average(lines) {
+function average(lines, T = TARGETS) {
   const avg = (k) => { const v = lines.map((l) => l[k]).filter((x) => x != null); return v.length ? round1(v.reduce((a, b) => a + b, 0) / v.length) : null; };
   const out = { games: lines.length };
-  for (const k of Object.keys(TARGETS)) out[k] = avg(k);
+  for (const k of Object.keys(T)) out[k] = avg(k);
   return out;
 }
 
 // Tips voor één game, alleen waar je onder je doel zit. Jungle en top krijgen hun eigen CS-/KP-tip.
 function tips(l, lane = "jungle") {
   const jungle = lane === "jungle";
+  const T = targetsFor(lane);
+  const pass = (key, v) => ok(key, v, T);
   const t = [];
-  if (!ok("deaths", l.deaths)) t.push(`${l.deaths} deaths: na 2 deaths niet meer zelf het gevecht beginnen; farm en spring pas in als een teamgenoot engaget.`);
-  if (l.kp != null && !ok("kp", l.kp)) t.push(jungle ? `KP ${l.kp}%: wees bij elke drake/herald en elk gevecht bij een objective; een kill in een lege jungle levert minder op.` : `KP ${l.kp}%: na een gewonnen lane of een gepushte wave mee naar drake of herald; met je R kun je gevechten op de hele map joinen.`);
-  if (l.cw != null && !ok("cw", l.cw)) t.push(jungle ? "Geen control ward gekocht: elke back één, in de river-bush bij drake of herald." : "Geen control ward gekocht: elke back één, in de tri-bush of river-bush van je lane tegen ganks.");
-  if (!ok("csm", l.csm)) t.push(jungle ? `CS ${l.csm}/min: tussen ganks door camps blijven clearen; laat geen camps staan als er niets te halen valt.` : `CS ${l.csm}/min: laat geen wave onder je toren vallen; na een back eerst de wave pakken, dan pas vechten.`);
+  if (!pass("deaths", l.deaths)) t.push(`${l.deaths} deaths: na 2 deaths niet meer zelf het gevecht beginnen; farm en spring pas in als een teamgenoot engaget.`);
+  if (l.kp != null && !pass("kp", l.kp)) t.push(jungle ? `KP ${l.kp}%: wees bij elke drake/herald en elk gevecht bij een objective; een kill in een lege jungle levert minder op.` : `KP ${l.kp}%: na een gewonnen lane of een gepushte wave mee naar drake of herald, en loop mee als je jungler aan jouw kant gankt of scuttle pakt.`);
+  if (l.cw != null && !pass("cw", l.cw)) t.push(jungle ? "Geen control ward gekocht: elke back één, in de river-bush bij drake of herald." : "Geen control ward gekocht: elke back één, in de tri-bush of river-bush van je lane tegen ganks.");
+  if (!pass("csm", l.csm)) t.push(jungle ? `CS ${nlNum(l.csm)}/min: tussen ganks door camps blijven clearen; laat geen camps staan als er niets te halen valt.` : `CS ${nlNum(l.csm)}/min: laat geen wave onder je toren vallen; na een back eerst de wave pakken, dan pas vechten.`);
   return t;
 }
 
@@ -133,7 +157,7 @@ function analysis(lines, { lane = "jungle", mainId = null, names = {} } = {}) {
   const scope = mainId && onMain.length >= MIN_MAIN_GAMES ? onMain : lines;
   if (!scope.length) return null;
   const wins = scope.filter((l) => l.win), losses = scope.filter((l) => !l.win);
-  const T = { ...TARGETS, ...EXTRA };
+  const T = { ...targetsFor(lane), ...EXTRA, vpm: { ...EXTRA.vpm, min: vpmTarget(lane), hint: `${nlNum(vpmTarget(lane))}+` } };
   const good = [], bad = [];
   for (const [k, t] of Object.entries(T)) {
     const v = mean(scope, k);
@@ -175,4 +199,4 @@ function analysis(lines, { lane = "jungle", mainId = null, names = {} } = {}) {
   };
 }
 
-module.exports = { TARGETS, ok, fromEog, fromGame, riftGames, average, tips, analysis };
+module.exports = { TARGETS, targetsFor, vpmTarget, ok, fromEog, fromGame, riftGames, average, tips, analysis };

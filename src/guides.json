@@ -1,30 +1,32 @@
 {
   "galio": {
     "algemeen": [
-      "Jouw taak is hard-engage voor je team: W-taunt + R over je laner als zijn jungler gankt.",
-      "Lane: farm met Q, trade kort met E-W-auto en loop weg; je wint geen lange trades.",
-      "Powerspike: level 6 en Rocketbelt. Roam na 6 als je lane gepusht is.",
-      "Vecht nooit alleen in de river; je bent een counter-engage, geen duelist."
+      "Jouw taak in jullie duo: de setup. E (Justice Punch) en de W-taunt (Shield of Durand) houden je laner vast als Danny gankt.",
+      "Lane: farm en poke met Q, trade kort en loop weg. Je passief (Colossal Smash) slaat bij je volgende aanval in een cirkel: raak de wave én de laner.",
+      "Je W geeft een schild tegen magic damage: tegen AP-mids en AP-teams ben je extra taai. Is hun team vooral AD, kies dan Malphite.",
+      "Level 6: R (Hero's Entrance) op een teamgenoot die vecht, ook ver weg. Push eerst je wave, dan ulten, dan verlies je niets.",
+      "Vecht niet alleen in de river; je bent engage en bescherming, geen duelist."
     ],
     "fallback": [
       "Veilig farmen, E alleen als je zeker een trade wint of een gank wilt setten."
     ],
     "vs": {
       "yasuo": [
-        "Je W-taunt gaat niet door zijn windwall; taunt op een moment dat hij net Q-dasht.",
-        "Vroeg Steelcaps + Seeker's Armguard; hij wint auto-trades.",
-        "Laat hem pushen en roep jungle: hij dive't vaak te diep."
+        "Zijn windwall blokkeert je Q, niet je E of W-taunt.",
+        "Hij wint lange auto-trades: kort traden met E + W en weer weg.",
+        "Laat hem pushen en roep Danny: hij dived vaak te diep."
       ],
       "katarina": [
-        "Je W-taunt stopt haar R volledig: hou W tot ze R gebruikt.",
-        "Zet geen Q-poke op haar daggers; ze gaat dan op je in.",
-        "Mercury's Treads en snelle Zhonya's."
+        "Je W-taunt onderbreekt haar R: hou W tot ze R gebruikt.",
+        "Ga niet bij haar daggers staan: daarmee springt ze op je.",
+        "Mercury's Treads helpen tegen haar en de rest van een AP-team."
       ],
       "malzahar": [
-        "Zijn R gaat door je schild heen: koop Quicksilver Sash of Mercury's.",
-        "Push de wave onder zijn toren en roam; je wint de lane niet direct."
+        "Zijn passief blokkeert de eerste damage of CC: breek het met Q voordat je E/W gebruikt.",
+        "Push de wave en roam; je wint deze lane niet direct, je wint hem op de map."
       ]
-    }
+    },
+    "spike": "R kan op {duo} als hij een gevecht begint: push je wave en hou de map in de gaten."
   },
   "ekko": {
     "algemeen": [
@@ -58,7 +60,8 @@
         "Ontwijk haar E (charm); zonder E wint jouw all-in.",
         "W stun op haar R-eindpositie is lastig: speel rond haar R-cooldown."
       ]
-    }
+    },
+    "spike": "Je R is je ontsnapping én burst: je kunt agressiever traden."
   },
   "sylas": {
     "algemeen": [
@@ -92,7 +95,8 @@
         "Zijn passive-schild eerst breken met Q, dan E.",
         "QSS niet nodig: steel zijn R voor een suppress op hun carry."
       ]
-    }
+    },
+    "spike": "Kijk welke R je kunt stelen: een engage-R (Malphite, Galio) wint teamfights."
   },
   "rengar": {
     "algemeen": [
@@ -122,7 +126,8 @@
         "Zijn burst wint vroeg; vecht alleen vanuit bush.",
         "Tegen hem Edge of Night of Death's Dance."
       ]
-    }
+    },
+    "spike": "R ziet de dichtstbijzijnde vijand: gebruik hem om een laner te ganken van een onverwachte kant."
   },
   "khazix": {
     "algemeen": [
@@ -152,7 +157,8 @@
         "Pak haar marks af: zij is zwak vroeg in isolatie.",
         "Haar R houdt haar in leven: wacht tot die voorbij is."
       ]
-    }
+    },
+    "spike": "Evolueer je volgende punt en zoek geïsoleerde doelwitten."
   },
   "nidalee": {
     "algemeen": [
@@ -182,7 +188,8 @@
         "Hij wint dichtbij: kite met speren.",
         "Steel zijn camps; hij heeft ze nodig om te schalen."
       ]
-    }
+    },
+    "spike": "Speer-poke op een laner met lage HP is nu bijna een kill met je gank."
   },
   "gangplank": {
     "algemeen": [
@@ -306,5 +313,180 @@
     "fallback": [
       "Vecht bij je tentakels, raak eerst E en gebruik R alleen in een echt gevecht."
     ]
+  },
+  "malphite": {
+    "algemeen": [
+      "Je pickt Malphite tegen een AD-team: je W (Thunderclap) geeft extra armor en je E (Ground Slam) verlaagt hun attack speed.",
+      "Lane: poke met Q (Seismic Shard), die steelt ook movement speed. Je passieve schild (Granite Shield) komt terug als je even geen damage krijgt: trade, loop weg, wacht op je schild.",
+      "Powerspike: level 6 (R: Unstoppable Force). Met R + Flash vang je meerdere vijanden; Danny moet er meteen achteraan.",
+      "Teamfight: R op de backline (ADC/mid) of op 3+ vijanden, niet op de tank vooraan. Daarna E in het midden voor de attack speed-slow.",
+      "Na een gepushte wave: roam naar Danny's kant. Jouw R is de beste gank-setup die je hebt."
+    ],
+    "fallback": [
+      "Farm veilig met Q en wacht op level 6; je bent het sterkst in teamfights, niet in de lane."
+    ],
+    "vs": {
+      "yasuo": [
+        "Zijn windwall blokkeert je Q, niet je R of E.",
+        "Je E verlaagt zijn attack speed: dat breekt zijn trades. Gebruik E als hij op je springt."
+      ],
+      "zed": [
+        "Blijf achter je minions tegen zijn W/Q-poke; je passieve schild vangt veel op.",
+        "Na zijn R: E (attack speed weg) en je W-armor maken zijn combo zwak. Bewaar E voor dat moment."
+      ],
+      "talon": [
+        "Hij roamt veel: ping meteen als hij weg is en volg met je R naar het gevecht.",
+        "Armor vroeg: zijn damage is bijna allemaal AD."
+      ]
+    },
+    "spike": "R + Flash op 2+ vijanden is een gewonnen gevecht; laat {duo} weten dat je R klaar is."
+  },
+  "shaco": {
+    "algemeen": [
+      "Box clear: zet vóór de camps spawnen je W-boxen bij je eerste camp. Ze fearen en doen damage, zo start je snel en gezond.",
+      "Je bent het sterkst vroeg: level 2-4 ganken of invaden. Speel op voorsprong en objectives voordat hun team zijn items heeft.",
+      "Q (Deceive) maakt je onzichtbaar: kom achter je doelwit. Aanvallen van achteren (Backstab) doen extra schade.",
+      "Zet boxen in bosjes waar de vijand langs moet (river, tri-bush): voor ganks en om jezelf of Ayoub te beschermen. Na even staan worden ze onzichtbaar.",
+      "R (Hallucinate) maakt een kloon: stuur hem een andere kant op om skillshots en torens te misleiden. Als hij doodgaat, ontploft hij.",
+      "Teamfight: ga er nooit als eerste in. Wacht tot jullie engage (Ayoub) er is geweest en pak dan de carry."
+    ],
+    "fallback": [
+      "Speel op tempo: gank waar de vijand ver gepusht staat, farm als er niets te halen is."
+    ],
+    "vs": {},
+    "spike": "Je kloon (R) misleidt torens en skillshots: nu kun je diven met een mid-gank."
+  },
+  "duo": {
+    "galio": {
+      "*": [
+        "Je R kan op elke teamgenoot: springt {duo} een gevecht in, ult hem en je bent er met een knock-up.",
+        "Push je wave voordat je roamt, dan verlies je niets als je naar {duo}'s gevecht gaat."
+      ],
+      "shaco": [
+        "Shaco heeft weinig harde CC: jouw E/W is de CC waar zijn ganks op draaien. Jij gaat erin, hij komt erachteraan.",
+        "In een gank eerst jouw taunt, dan zijn box-fear, niet tegelijk: dan staat de vijand twee keer zo lang stil."
+      ]
+    },
+    "malphite": {
+      "*": [
+        "Jouw R is de setup: {duo} gankt, jij R + E, hij maakt het af.",
+        "Na level 6: shove en loop mee naar drake/herald met {duo}."
+      ],
+      "shaco": [
+        "Shaco pakt picks op de flanken; met R vang jij de rest. Teamfight: jij R op de backline, hij duikt op de carry."
+      ]
+    },
+    "shaco": {
+      "*": [
+        "Gank mid vaker dan de andere lanes: {duo}'s engage maakt mid het makkelijkst te ganken."
+      ],
+      "galio": [
+        "Galio kan met R naar jou toe vliegen: begin je een gevecht, ping {duo}; hij kan van de andere kant van de map komen.",
+        "Gank mid ná zijn E/W-taunt: dan staat de mid laner stil en is je Q-backstab gratis."
+      ],
+      "malphite": [
+        "Malphite R gooit meerdere vijanden omhoog: wacht in teamfights op zijn R en duik dan op de carry.",
+        "Mid-gank: {duo} zet Q-slow, jij komt onzichtbaar (Q) achter de mid laner."
+      ],
+      "lissandra": [
+        "Lissandra's W en R houden de mid laner vast: gank mid als zij ze klaar heeft, dan is je Q-backstab gratis.",
+        "Teamfight: wacht tot {duo} haar R op de carry zet en duik dan zelf op hem."
+      ],
+      "irelia": [
+        "Gank mid als {duo} haar E kan zetten: stun + jouw backstab = kill.",
+        "Ping als je komt: Irelia wil eerst 4 passief-stacks op minions voor de all-in."
+      ]
+    },
+    "rengar": {
+      "*": [
+        "Gank mid als {duo} zijn CC klaar heeft: zijn engage + jouw leap = kill."
+      ]
+    },
+    "khazix": {
+      "*": [
+        "Mid laners zijn vaak geïsoleerd na een roam van {duo}: zoek die picks met je Q."
+      ]
+    },
+    "nidalee": {
+      "*": [
+        "Speer (Q) de mid laner als {duo} hem vasthoudt; zijn CC maakt je speer makkelijk raak."
+      ]
+    },
+    "lissandra": {
+      "*": [
+        "Jouw R op een vijand is een gank-setup: {duo} komt, jij R, hij maakt het af.",
+        "Push je wave en loop mee naar scuttle en drake; jouw W/R houden iemand vast in de river."
+      ],
+      "shaco": [
+        "Shaco heeft weinig harde CC: jouw W en R zijn de CC waar zijn ganks op draaien. Jij houdt vast, hij doet de damage.",
+        "In een gank eerst zijn box-fear, dan pas jouw R: dan staat de vijand twee keer zo lang stil."
+      ]
+    },
+    "irelia": {
+      "*": [
+        "Jouw E-stun is de gank-setup: {duo} komt, jij E, hij maakt het af.",
+        "Push je wave voordat je meegaat naar scuttle of drake; met Q-resets ben je er snel."
+      ],
+      "shaco": [
+        "Eerst jouw E-stun, dan zijn box-fear: zo staat de vijand twee keer zo lang stil.",
+        "Shaco begint vaak achter de vijand: ga erin zodra hij uit zijn Q komt, dan zit de vijand ertussen."
+      ]
+    }
+  },
+  "lissandra": {
+    "algemeen": [
+      "Je pickt Lissandra tegen een AD-team, vooral tegen assassins (Zed, Talon, Qiyana, Naafiri): ze kunnen niet op je springen zonder vast te staan.",
+      "Lane: poke met Q (Ice Shard), die schiet door een minion heen naar de laner erachter. Springt hij op je: W (Ring of Frost) roott alles om je heen.",
+      "R (Frozen Tomb) op jezelf: je staat even onaantastbaar, healt en remt alles om je heen af. Gebruik dat als Zed of Talon zijn combo op je doet.",
+      "R op een vijand: hij staat stil. Dat is jouw gank-setup voor Danny.",
+      "Engage: E (Glacial Path) erin, W voor de root, R op de carry. Ga pas als Danny of je team kan volgen.",
+      "Na een gepushte wave: roam naar Danny's kant; met E + W ben je er snel en houd je iemand vast."
+    ],
+    "fallback": [
+      "Farm veilig met Q, bewaar W tegen een all-in en ga pas na level 6 voor plays."
+    ],
+    "spike": "R op een vijand houdt hem vast: ping {duo} en gank samen, of R op jezelf als je gedived wordt.",
+    "vs": {
+      "zed": [
+        "Zet R op jezelf vlak voordat zijn mark ontploft (zo'n 3 seconden na zijn R): dan mist die burst.",
+        "Hou W klaar voor als hij naast je verschijnt."
+      ],
+      "yasuo": [
+        "Zijn windwall blokkeert je Q, niet je W of R.",
+        "Hij moet dichtbij komen: W zodra hij op je dasht."
+      ],
+      "yone": [
+        "Zijn E brengt hem terug naar zijn startpunt: zet je W/R in na die terugsprong, niet ervoor.",
+        "Lastige lane: speel veilig, farm en wacht op Danny."
+      ]
+    }
+  },
+  "irelia": {
+    "algemeen": [
+      "Je pickt Irelia tegen een AD-team: met de juiste items (de build in de tool past zich aan hun team aan) win je bijna elk 1v1 en ben je moeilijk te doden.",
+      "Lane: Q op minions die bijna dood zijn, dan reset hij. Ga pas op de laner als je passief op 4 stacks staat.",
+      "E-stun raakt? Hij is gemarkt en je Q op hem reset meteen. E + Q is je trade én je gank-setup voor Danny.",
+      "W (Defiant Dance) vermindert veel damage, vooral AD: houd hem vast tegen een burst-combo (Zed R, Talon all-in).",
+      "Level 6: je R markeert iedereen die hij raakt, dus je kunt Q van doel naar doel resetten. All-in met R + E.",
+      "Late game: ga niet als eerste een 5v5 in. Wacht op de engage, dan R op de groep en Q-resets op wie gemarkt is. Geen teamfight? Split push: met items win je de meeste 1v1's."
+    ],
+    "fallback": [
+      "Farm veilig met Q-resets op minions en speel pas agressief met 4 passief-stacks en je eerste item."
+    ],
+    "spike": "R markeert iedereen die hij raakt: all-in met R + E en Q-resets, ping {duo} als hij in de buurt is.",
+    "vs": {
+      "zed": [
+        "Ga op hem in nadat hij zijn W-schaduw heeft gebruikt; dan kan hij niet weg.",
+        "W op het moment dat zijn R-mark ontploft."
+      ],
+      "talon": [
+        "Hij roamt veel: ping meteen en push zijn toren als hij weg is.",
+        "W tegen zijn all-in, dan E-stun als hij naast je staat."
+      ],
+      "yasuo": [
+        "Lastig (47%): wacht tot hij zijn Q3-tornado heeft gebruikt voordat je erin gaat.",
+        "Speel op Danny's ganks; je E-stun maakt hem makkelijk te vangen."
+      ]
+    }
   }
 }

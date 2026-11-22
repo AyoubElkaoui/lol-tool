@@ -21,14 +21,35 @@ const lcu = new LcuClient();
 let win = null;
 
 const PROFILES = {
-  // teamPick: score tegen het hele vijandelijke team; favorite: bij twijfel deze champ.
-  // Allebei one-trick: Ayoub Rengar, Danny Gangplank. Is die weg, dan hovert/lockt de tool de beste counter pick.
-  ayoub: { name: "Ayoub", lane: "jungle", pool: ["rengar"], favorite: "rengar", teamPick: true },
-  danny: { name: "Danny", lane: "top", pool: ["gangplank"], favorite: "gangplank" },
+  // pool: je eigen champs (eerste = main). backups: pas als de pool weg is (gebanned/gepakt).
+  // oneTrick: de main altijd bovenaan zolang hij vrij is. comp: champ uit je pool die beter past
+  // bij hun team (Irelia tegen een AD-team). duo: met wie je speelt en in welke lane hij staat.
+  // Ayoub: AD-team → Irelia, AP-team → Galio; gemengd = de beste van de twee op de data (bij twijfel Galio).
+  ayoub: { name: "Ayoub", lane: "middle", pool: ["galio", "irelia"], favorite: "galio", teamPick: true, compStrict: true,
+    comp: [{ slug: "irelia", when: "ad" }, { slug: "galio", when: "ap" }],
+    duo: { name: "Danny", lane: "jungle", riotName: "EversD" } },
+  // Danny speelt alleen Shaco: geen backups, en is Shaco weg dan hovert/lockt de tool niets anders.
+  danny: { name: "Danny", lane: "jungle", pool: ["shaco"], favorite: "shaco", oneTrick: true, onlyMain: true, teamPick: true,
+    backups: [],
+    duo: { name: "Ayoub", lane: "middle", riotName: "Qyoub" } },
 };
 
-// Pool voor de lane die je in champ select krijgt; anders de standaard-pool van het profiel.
-const poolFor = (lane) => { const p = PROFILES[settings.profile]; return p.pools?.[lane] || p.pool; };
+// Profiel met de eigen aanpassingen uit de instellingen (pool/backups/duo-naam).
+function prof(key = settings.profile) {
+  const base = PROFILES[key] || PROFILES.ayoub;
+  const own = settings.pools?.[key] || {};
+  const pool = own.pool?.length ? own.pool : base.pool;
+  return {
+    ...base, pool, backups: own.backups ?? base.backups ?? [],
+    favorite: own.pool?.length ? own.pool[0] : base.favorite,
+    duo: { ...base.duo, ...(settings.duoNames?.[key] != null ? { riotName: settings.duoNames[key] } : {}) },
+  };
+}
+
+// Pool voor de lane die je in champ select krijgt; buiten je eigen lane geen vaste pool
+// (dan telt alleen wat je hovert, plus de beste counter picks).
+const poolFor = (lane) => { const p = prof(); return lane === p.lane ? p.pool : p.pools?.[lane] || p.pool; };
+const backupsFor = (lane) => { const p = prof(); return lane === p.lane ? p.backups : []; };
 
 // Data van spelers op jouw niveau: lolalytics heeft bronze/silver/gold_plus/emerald_plus.
 // Iron en unranked vallen onder Bronze (Iron heeft te weinig games voor betrouwbare data).
@@ -45,7 +66,7 @@ async function refreshRank() {
 }
 
 const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
-let settings = { profile: "ayoub", tier: "auto", autoRunes: true, autoItems: true, autoSpells: false, autoHover: true, autoBan: false, autoLock: false, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d", overlay: true };
+let settings = { profile: "ayoub", tier: "auto", autoRunes: true, autoItems: true, autoSpells: false, autoHover: true, autoBan: false, autoLock: false, autoAccept: false, alwaysOnTop: false, runeChoice: "pick", flashKey: "d", overlay: true, overlayPos: "right", overlayCompact: false, overlayDuo: true, overlaySpikes: true, overlayCoach: true };
 function loadSettings() {
   try { settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsFile(), "utf8")) }; } catch { /* defaults */ }
   // v0.1.15: oude standaard Gold+ paste niet bij jullie elo; eenmalig naar automatisch.
@@ -92,7 +113,11 @@ function log(msg) {
 `);
   } catch { /* geen log */ }
 }
-function push() { if (win && !win.isDestroyed()) win.webContents.send("state", { ...state, settings, manualEnemyId }); }
+// Namen bij de slugs (voor de instellingen); gevuld zodra Data Dragon geladen is.
+let slugNames = {};
+const named = (slugs) => (slugs || []).map((sl) => slugNames[sl] || sl);
+const view = () => ({ ...state, settings, manualEnemyId, profiles: Object.fromEntries(Object.keys(PROFILES).map((k) => { const p = prof(k); return [k, { ...p, poolNames: named(p.pool), backupNames: named(p.backups) }]; })) });
+function push() { if (win && !win.isDestroyed()) win.webContents.send("state", view()); }
 
 const LANE = { top: "top", jungle: "jungle", middle: "middle", bottom: "bottom", utility: "support" };
 const BOOTS = new Set([1001, 3005, 3006, 3009, 3010, 3020, 3047, 3111, 3117, 3158]);
@@ -148,8 +173,8 @@ async function refreshGoals(history) {
     if (line) lines.push(line);
   }
   const champs = await dd.champions();
-  const prof = PROFILES[settings.profile];
-  const mainId = Object.values(champs).find((c) => c.lolaSlug === prof.favorite)?.id || null;
+  const pr = prof();
+  const mainId = Object.values(champs).find((c) => c.lolaSlug === pr.favorite)?.id || null;
   const names = Object.fromEntries(Object.values(champs).map((c) => [c.id, c.name]));
   // Eigen record per tegenstander in jouw lane (laatste 40 games): wins, losses, gem. deaths.
   const vs = {};
@@ -163,11 +188,26 @@ async function refreshGoals(history) {
   state.vsRecord = vs;
   const recent = lines.slice(0, 20);
   state.goals = {
-    targets: goals.TARGETS, avg: goals.average(recent),
+    targets: goals.targetsFor(pr.lane), avg: goals.average(recent),
     recent: recent.slice(0, 10).map((l) => ({ ...l, champ: champs[l.championId]?.name || "?" })),
-    analysis: goals.analysis(recent, { lane: prof.lane, mainId, names }),
+    analysis: goals.analysis(recent, { lane: pr.lane, mainId, names }),
+    streak: lossStreak(recent),
   };
   push();
+}
+
+// Verliesreeks in deze speelsessie (games die binnen 3 uur na elkaar gestart zijn).
+// Na 3 verloren op rij laat de app een pauze-melding zien: met tilt speel je slechter.
+const SESSION_GAP = 3 * 60 * 60 * 1000;
+function lossStreak(lines) {
+  let n = 0, prev = null;
+  for (const l of lines) {
+    if (l.win) break;
+    if (prev && l.created && prev - l.created > SESSION_GAP) break;
+    n++; prev = l.created || prev;
+  }
+  const last = lines[0]?.created || null;
+  return { losses: n, recent: !!last && Date.now() - last < SESSION_GAP };
 }
 
 async function checkUpdate() {
@@ -178,21 +218,38 @@ async function checkUpdate() {
 async function processBans(session, champs, patch) {
   const myCell = session.localPlayerCellId;
   const meRow = (session.myTeam || []).find((p) => p.cellId === myCell);
-  const lane = LANE[meRow?.assignedPosition] || PROFILES[settings.profile].lane;
+  const lane = LANE[meRow?.assignedPosition] || prof().lane;
   const taken = takenIds(session);
   const hovers = (session.theirTeam || []).map((p) => p.championPickIntent || p.championId).filter((x) => x > 0);
   const key = `${lane}|${[...taken].sort().join(",")}|${hovers.join(",")}|${meRow?.championPickIntent || 0}`;
   if (key === lastBanKey) return;
   lastBanKey = key;
+  const p = prof();
   const pool = [...poolFor(lane)];
   // Hover je een champ buiten je pool, dan telt die mee (zodat het ook werkt als je iets anders speelt).
   const myHover = champs[meRow?.championPickIntent || meRow?.championId || 0];
   if (myHover && !pool.includes(myHover.lolaSlug)) pool.unshift(myHover.lolaSlug);
+  // One-trick: bannen voor je main of wat je hovert (je backups speel je alleen als hij weg is).
+  const banPool = p.oneTrick && lane === p.lane ? [pool[0]] : pool;
   const poolCounters = [];
-  for (const slug of pool) poolCounters.push({ slug, list: await countersFor(slug, lane, patch) });
-  state.bans = { lane, ...an.banAdvice({ poolCounters, lane, taken, champs, enemyHovers: hovers }), pool };
+  for (const slug of banPool) poolCounters.push({ slug, list: await countersFor(slug, lane, patch) });
+  const own = [...pool, ...backupsFor(lane)];
+  state.bans = { lane, ...an.banAdvice({ poolCounters, lane, taken: new Set([...taken, ...own.map((sl) => Object.values(champs).find((c) => c.lolaSlug === sl)?.id).filter(Boolean)]), champs, enemyHovers: hovers }), pool: own };
   state.lane = lane;
   push();
+}
+
+// Je duo in champ select: op naam (als de client die laat zien), anders op zijn lane.
+const POS = { top: "top", jungle: "jungle", middle: "middle", bottom: "bottom", utility: "support" };
+function findDuo(session, champs) {
+  const d = prof().duo;
+  if (!d) return null;
+  const mates = (session.myTeam || []).filter((p) => p.cellId !== session.localPlayerCellId);
+  const name = String(d.riotName || "").toLowerCase();
+  const row = (name && mates.find((p) => String(p.gameName || "").toLowerCase().startsWith(name))) || mates.find((p) => POS[p.assignedPosition] === d.lane);
+  if (!row) return null;
+  const champ = champs[row.championId || row.championPickIntent || 0] || null;
+  return { name: d.name, lane: POS[row.assignedPosition] || d.lane, champ };
 }
 
 // ---------- pick-fase ----------
@@ -218,20 +275,24 @@ async function processCounterPicks(session, champs, patch) {
   state.locked = myPicks.length ? myPicks.every((a) => a.completed) : meRow.championId > 0;
   if (state.locked) return;
   const myHoverId = meRow.championPickIntent || meRow.championId || 0;
-  const lane = LANE[meRow.assignedPosition] || PROFILES[settings.profile].lane;
+  const lane = LANE[meRow.assignedPosition] || prof().lane;
   const taken = takenIds(session);
   taken.delete(myHoverId);
   const enemyIds = (session.theirTeam || []).map((p) => p.championId || p.championPickIntent || 0).filter((x) => x > 0);
-  const pool = poolFor(lane).map((slug) => Object.values(champs).find((c) => c.lolaSlug === slug)).filter(Boolean);
-  if (champs[myHoverId] && !pool.includes(champs[myHoverId])) pool.unshift(champs[myHoverId]);
-  const key = `${lane}|${patch}|${enemyIds.slice().sort().join(",")}|${[...taken].sort().join(",")}|${pool.map((c) => c.id).join(",")}|${manualEnemyId}`;
+  const bySlug = (slug) => Object.values(champs).find((c) => c.lolaSlug === slug);
+  const pool = poolFor(lane).map(bySlug).filter(Boolean);
+  const backups = backupsFor(lane).map(bySlug).filter((c) => c && !pool.includes(c));
+  const hovered = champs[myHoverId];
+  if (hovered && !pool.includes(hovered) && !backups.includes(hovered)) pool.unshift(hovered);
+  const key = `${lane}|${patch}|${enemyIds.slice().sort().join(",")}|${[...taken].sort().join(",")}|${pool.map((c) => c.id).join(",")}|${backups.map((c) => c.id).join(",")}|${manualEnemyId}`;
   if (key === lastPickKey) return;
   lastPickKey = key;
   try {
     const opts = { lane, champs, patch, tier: tierNow() };
     const enemy = await laneEnemy(enemyIds, lane, champs, patch);
-    const prof = PROFILES[settings.profile];
-    state.picks = await picks.advice({ enemy, enemyIds: prof.teamPick ? enemyIds : [], pool, taken, favorite: prof.favorite, ...opts });
+    const p = prof();
+    const own = lane === p.lane;
+    state.picks = await picks.advice({ enemy, enemyIds: p.teamPick ? enemyIds : [], pool, backups, taken, favorite: own ? p.favorite : null, oneTrick: own && p.oneTrick && !(hovered && hovered.lolaSlug !== p.favorite && !backups.includes(hovered)), compRules: own ? p.comp : null, compStrict: own && !!p.compStrict, dmgType: an.dmgType, ...opts });
     push();
   } catch (e) { lastPickKey = ""; log("Counter picks mislukt: " + e.message); }
 }
@@ -308,7 +369,7 @@ async function processPick(session, champs, patch) {
   const meRow = (session.myTeam || []).find((p) => p.cellId === myCell);
   const myChampId = meRow?.championId || meRow?.championPickIntent || 0; // hoveren telt al
   if (!meRow || !myChampId) return;
-  const lane = LANE[meRow.assignedPosition] || PROFILES[settings.profile].lane;
+  const lane = LANE[meRow.assignedPosition] || prof().lane;
   const locked = meRow.championId > 0;
   const enemyIds = (session.theirTeam || []).map((p) => p.championId || p.championPickIntent || 0).filter((x) => x > 0);
   const allyIds = (session.myTeam || []).filter((p) => p.cellId !== myCell).map((p) => p.championId || p.championPickIntent || 0).filter((x) => x > 0);
@@ -327,6 +388,7 @@ async function processPick(session, champs, patch) {
     state.enemy = laner?.champ || null;
     state.enemyManual = !!manualEnemyId && state.enemy?.id === manualEnemyId;
     if (laner && enemyChanged) log(`Tegenstander in lane: ${laner.champ.name}${laner.row ? ` (${laner.row.vsWr}% wr)` : ""}`);
+    state.duo = findDuo(session, champs);
     let roles = {};
     try { roles = await picks.enemyRoles({ enemyIds, champs, patch, tier: tierNow(), lane }); } catch { /* alleen tags */ }
     state.enemyRoles = roles;
@@ -422,7 +484,7 @@ async function processPick(session, champs, patch) {
     let insights = null;
     if (state.enemy) { try { insights = await lol.vsInsights({ ...opts, vs: state.enemy.lolaSlug }); } catch { /* geen matchup-data */ } }
     const myVs = state.enemy ? state.vsRecord?.[state.enemy.id] || null : null;
-    state.guide = guide.build({ me, enemy: state.enemy, insights, myVs, lane, counterRow: laner?.row || null, runePage: runes.pages[activeRuneIdx(runes.pages)], itemBuild: items, itemNames, itemData, team: state.team, teamBuild: state.teamBuild, spells: state.spells, skills: state.skills });
+    state.guide = guide.build({ duo: state.duo, me, enemy: state.enemy, insights, myVs, lane, counterRow: laner?.row || null, runePage: runes.pages[activeRuneIdx(runes.pages)], itemBuild: items, itemNames, itemData, team: state.team, teamBuild: state.teamBuild, spells: state.spells, skills: state.skills });
     state.items = { ...items, allBuilds: undefined, styles: undefined, situational: state.guide.situationalIds || items.situational, names: itemNames, gold: itemGold, itemUrl: urls.item("").replace(/\.png$/, ""), options: vsOptions || u?.itemOptions || null, buildIdx: pickedBuild ? buildIdx : null };
     state.runeIdx = activeRuneIdx(runes.pages);
     push();
@@ -495,7 +557,10 @@ function bestBan(session) {
 function bestPickRow() {
   const p = state.picks;
   if (!p) return null;
-  return p.pool?.find((r) => !r.taken && r.wr != null) || p.pool?.find((r) => !r.taken) || p.best?.find((r) => r.wr != null) || null;
+  // Alleen de main (Danny: Shaco): geen andere champ hoveren of locken.
+  const pr = prof();
+  if (pr.onlyMain && !pr.backups.length && p.lane === pr.lane) return p.pool?.find((r) => !r.taken && pr.pool.includes(r.champ.lolaSlug)) || null;
+  return p.pool?.find((r) => r.pick && !r.taken) || p.pool?.find((r) => !r.taken && r.wr != null) || p.pool?.find((r) => !r.taken) || p.best?.find((r) => r.wr != null) || null;
 }
 const bestPick = () => bestPickRow()?.champ.id || 0;
 
@@ -597,7 +662,7 @@ async function processEndOfGame() {
     const champs = await dd.champions();
     const champ = champs[me.championId];
     const line = goals.fromEog(eog);
-    const tips = goals.tips(line, PROFILES[settings.profile].lane);
+    const tips = goals.tips(line, prof().lane);
     if (!tips.length) tips.push("Alle vier de doelen gehaald. Werkpunt blijft: games afsluiten als je voor staat (Baron/torens, geen chases).");
     state.postgame = { champ: champ?.name, win: eog.gameLength && (eog.teams || []).find((t) => t.isPlayerTeam)?.isWinningTeam, kda: line.kda, cs, csm: line.csm, deaths: line.deaths, kp: line.kp, cw: line.cw, mins: Math.round(mins), vision: s.VISION_SCORE || 0, tips };
     log(`Game klaar: ${champ?.name || "?"} ${line.kda}, KP ${line.kp ?? "?"}%, ${line.cw ?? "?"} control wards, ${line.csm} cs/min`);
@@ -611,12 +676,18 @@ async function processEndOfGame() {
 // "Windowed" staat (bij echt fullscreen tekent Windows niets over de game heen).
 // Ctrl+Shift+L zet hem aan/uit.
 let overlay = null, overlayHidden = false, liveBusy = false, liveFails = 0;
+const OVERLAY_W = 330, OVERLAY_H = 520;
+function overlayBounds() {
+  const b = screen.getPrimaryDisplay().bounds;
+  const right = b.x + b.width - OVERLAY_W - 12, left = b.x + 12;
+  const mid = b.y + Math.round(b.height * 0.24), up = b.y + Math.round(b.height * 0.06);
+  const pos = { right: [right, mid], left: [left, mid], topright: [right, up], topleft: [left, up] }[settings.overlayPos] || [right, mid];
+  return { x: pos[0], y: pos[1], width: OVERLAY_W, height: OVERLAY_H };
+}
 function ensureOverlay() {
   if (overlay && !overlay.isDestroyed()) return overlay;
-  const wa = screen.getPrimaryDisplay().bounds;
-  const w = 320, h = 320;
   overlay = new BrowserWindow({
-    width: w, height: h, x: wa.x + wa.width - w - 12, y: wa.y + Math.round(wa.height * 0.28),
+    ...overlayBounds(),
     frame: false, transparent: true, resizable: false, movable: false, focusable: false, skipTaskbar: true,
     alwaysOnTop: true, hasShadow: false, show: false,
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false },
@@ -645,11 +716,17 @@ async function liveTick() {
       build: state.teamBuild?.build || state.items?.core || [],
       extra: [...(state.items?.situational || []), ...[4, 5, 6].flatMap((k) => (opts[k] || []).map((o) => o.id))],
     };
-    const view = live.analyse(d, { itemData, champs, plan, targets: goals.TARGETS });
-    if (!view || (d.gameData?.gameTime || 0) < 5) { hideOverlay(); return; } // laadscherm
+    const p = prof();
+    const lane = state.lane || p.lane;
+    const lv = live.analyse(d, {
+      itemData, champs, plan, targets: goals.targetsFor(lane), vpmMin: goals.vpmTarget(lane),
+      lane, laneEnemyId: state.enemy?.id || null, roles: state.enemyRoles || {}, duo: p.duo || null,
+      show: { duo: settings.overlayDuo, spikes: settings.overlaySpikes, coach: settings.overlayCoach },
+    });
+    if (!lv || (d.gameData?.gameTime || 0) < 5) { hideOverlay(); return; } // laadscherm
     const o = ensureOverlay();
-    if (view) {
-      o.webContents.send("live", { ...view, itemUrl: urls.item("").replace(/\.png$/, ""), champUrl: urls.champion("") });
+    if (lv) {
+      o.webContents.send("live", { ...lv, compact: !!settings.overlayCompact, itemUrl: urls.item("").replace(/\.png$/, ""), champUrl: urls.champion("") });
       if (!o.isVisible()) o.showInactive();
       // De game zet zichzelf soms boven alles; elke keer opnieuw bovenop leggen.
       o.setAlwaysOnTop(true, "screen-saver", 1);
@@ -700,12 +777,13 @@ function createWindow() {
   win.on("closed", () => { win = null; if (overlay && !overlay.isDestroyed()) overlay.destroy(); });
 }
 
-ipcMain.handle("get-state", () => ({ ...state, settings, manualEnemyId }));
+ipcMain.handle("get-state", () => view());
 ipcMain.handle("set-settings", (_e, patch) => {
   settings = { ...settings, ...patch }; saveSettings();
   if ("alwaysOnTop" in patch && win) win.setAlwaysOnTop(!!settings.alwaysOnTop, "floating");
   if ("tier" in patch) refreshData().then(push).catch(() => {});
   if ("profile" in patch) refreshMyStats();
+  if ("overlayPos" in patch && overlay && !overlay.isDestroyed()) overlay.setBounds(overlayBounds());
   if ("tier" in patch || "profile" in patch || "runeChoice" in patch || "flashKey" in patch) { lastKey = ""; lastBanKey = ""; lastPickKey = ""; state.applied = { runes: null, items: null, spells: null }; }
   push(); return settings;
 });
@@ -739,13 +817,38 @@ ipcMain.handle("set-enemy", (_e, id) => {
   log(manualEnemyId ? `Tegenstander zelf gekozen: ${state.theirTeam.find((c) => c.id === manualEnemyId)?.name || manualEnemyId}` : "Tegenstander: weer automatisch");
   push(); return true;
 });
+// Eigen champion pool / backups instellen. Tekst met namen, gescheiden door komma's.
+// Leeg = de standaard van het profiel.
+const norm = (x) => String(x).toLowerCase().replace(/[^a-z0-9]/g, "");
+ipcMain.handle("set-pool", async (_e, { profile, pool, backups }) => {
+  const key = PROFILES[profile] ? profile : settings.profile;
+  const champs = await dd.champions();
+  const index = {};
+  for (const c of Object.values(champs)) for (const k of [c.name, c.lolaSlug, c.slug]) index[norm(k)] = c.lolaSlug;
+  const unknown = [];
+  const parse = (text) => String(text || "").split(/[,;\n]/).map((x) => x.trim()).filter(Boolean)
+    .map((x) => index[norm(x)] || (unknown.push(x), null)).filter((x, i, a) => x && a.indexOf(x) === i);
+  const p = parse(pool), b = parse(backups).filter((x) => !p.includes(x));
+  const own = { ...(settings.pools || {}) };
+  if (!p.length && !b.length) delete own[key];
+  else own[key] = { ...(p.length ? { pool: p } : {}), backups: b };
+  settings = { ...settings, pools: own }; saveSettings();
+  lastKey = ""; lastBanKey = ""; lastPickKey = "";
+  log(`Pool ${PROFILES[key].name}: ${named(prof(key).pool).join(", ")}${prof(key).backups.length ? ` · backups ${named(prof(key).backups).join(", ")}` : ""}${unknown.length ? ` · onbekend: ${unknown.join(", ")}` : ""}`);
+  push(); return { unknown };
+});
+ipcMain.handle("set-duo", (_e, { profile, name }) => {
+  const key = PROFILES[profile] ? profile : settings.profile;
+  settings = { ...settings, duoNames: { ...(settings.duoNames || {}), [key]: String(name || "").trim() } }; saveSettings();
+  push(); return true;
+});
 ipcMain.handle("reapply", async () => { lastKey = ""; lastBanKey = ""; lastPickKey = ""; state.applied = { runes: null, items: null, spells: null }; await tick(); return true; });
 
 app.whenReady().then(async () => {
   dd.setCacheDir(path.join(app.getPath("userData"), "ddragon"));
   loadSettings();
   createWindow();
-  try { log("Data Dragon " + (await dd.version())); await refreshData(); push(); } catch (e) { log("Data niet bereikbaar: " + e.message); }
+  try { log("Data Dragon " + (await dd.version())); slugNames = Object.fromEntries(Object.values(await dd.champions()).map((c) => [c.lolaSlug, c.name])); await refreshData(); push(); } catch (e) { log("Data niet bereikbaar: " + e.message); }
   checkUpdate();
   setInterval(() => tick().catch((e) => log("tick: " + e.message)), 1500);
   setInterval(() => lockTick(), 500);

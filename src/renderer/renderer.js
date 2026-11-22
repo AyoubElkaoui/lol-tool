@@ -72,7 +72,10 @@ function pickRow(s, r, top) {
   const facts = r.taken ? ["al weg"] : r.wr == null ? ["te weinig data"] : [`${Number(r.n).toLocaleString("nl-NL")} games`];
   const rec = record(s, r.champ);
   if (rec) facts.push(`jij: ${rec}`);
-  if (r.favorite) facts.push("voorkeur bij twijfel");
+  if (r.compWhy) facts.push(`past bij hun team: ${r.compWhy}`);
+  else if (r.favorite && r.pick) facts.push("main");
+  else if (r.favorite) facts.push("voorkeur bij twijfel");
+  if (r.backup) facts.push("backup");
   const vs = r.vs?.length ? `<small class="worst">${r.vs.map((v) => `${v.laner ? "<b>" : ""}${esc(v.name)} ${pct(v.wr)}${v.laner ? "</b>" : ""}`).join(" · ")}</small>` : "";
   const worst = r.worst?.length ? `<small class="worst">Zwak tegen ${r.worst.map((w) => `${esc(w.name)} ${pct(w.wr)}`).join(", ")}</small>` : "";
   const hover = r.taken ? "" : `data-hover="pick" data-champ="${r.champ.id}" title="Klik om ${esc(r.champ.name)} te hoveren"`;
@@ -87,7 +90,8 @@ function renderPicks(s) {
   const show = s.phase === "ChampSelect" && p && !s.locked;
   el.classList.toggle("hidden", !show);
   if (!show) return;
-  const topIdx = p.pool.findIndex((r) => !r.taken && r.wr != null);
+  const picked = p.pool.findIndex((r) => r.pick && !r.taken);
+  const topIdx = picked >= 0 ? picked : p.pool.findIndex((r) => !r.taken && r.wr != null);
   const pool = p.pool.map((r, i) => pickRow(s, r, i === topIdx)).join("");
   if (p.mode === "blind") {
     el.innerHTML = `<h2>Blind pick <small>${esc(LANE_NL[p.lane] || p.lane)} · nog geen tegenstander · verwachte winrate over alle matchups</small></h2>${enemyChooser(s)}<div class="picklist">${pool}</div>`;
@@ -264,21 +268,57 @@ function renderGoals(s) {
     ${rows ? `<details class="recent"${wasOpen ? " open" : ""}><summary>Laatste ${g.recent.length} games</summary><table><thead><tr><th></th><th>Champ</th><th>KDA</th>${GOAL_KEYS.map((k) => `<th>${esc(T[k].label)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></details>` : ""}`;
 }
 
+const SELECTS = ["profile", "tier", "runeChoice", "flashKey", "overlayPos"];
+const SWITCHES = ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop", "overlay", "overlayCompact", "overlayDuo", "overlaySpikes", "overlayCoach"];
+
+// Verliesreeks: na 2 verloren een rustige tip, na 3 op rij een pauze-advies.
+function renderTilt(s) {
+  const el = $("#tilt");
+  const st = s.goals?.streak;
+  const n = st?.recent ? st.losses : 0;
+  const show = n >= 2 && s.phase !== "InProgress";
+  el.classList.toggle("hidden", !show);
+  if (!show) return;
+  el.className = "tiltbar" + (n >= 3 ? " hard" : "");
+  el.innerHTML = n >= 3
+    ? `<b>${n} verloren op rij.</b> Neem 15 minuten pauze: drinken, even lopen. Met tilt speel je slechter en verlies je meer LP dan je wint. Daarna: één game, daarna kijken.`
+    : `<b>2 verloren op rij.</b> Kort resetten: chat dempen (/mute all), plan per game één ding (bijv. minder deaths), en surrender vroeg als het echt weg is.`;
+}
+
 function render(s) {
+  lastState = s;
   const st = $("#status");
   const phase = { ChampSelect: "champ select", InProgress: "in game", Lobby: "lobby", Matchmaking: "zoeken naar game", ReadyCheck: "accepteren!", EndOfGame: "einde game", PreEndOfGame: "einde game", None: "" }[s.phase] ?? s.phase ?? "";
   st.querySelector(".txt").textContent = s.client === "verbonden" ? `Verbonden${phase ? " · " + phase : ""} · ${s.profiles?.[s.settings.profile]?.name || ""}` : "Client zoeken…";
   st.className = "status" + (s.client === "verbonden" ? " on" : "");
-  for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).value = s.settings[id];
-  for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop", "overlay"]) $("#" + id).checked = !!s.settings[id];
+  for (const id of SELECTS) $("#" + id).value = s.settings[id];
+  for (const id of SWITCHES) $("#" + id).checked = !!s.settings[id];
+  // Tekstvelden niet overschrijven terwijl je typt.
+  const pr = s.profiles?.[s.settings.profile];
+  if (pr) {
+    const set = (id, v) => { const el = $("#" + id); if (document.activeElement !== el) el.value = v; };
+    set("poolText", (pr.poolNames || []).join(", "));
+    set("backupsText", (pr.backupNames || []).join(", "));
+    set("duoName", pr.duo?.riotName || "");
+  }
+  renderTilt(s);
   renderData(s); renderHero(s); renderBans(s); renderPicks(s); renderPostgame(s); renderGoals(s);
   $("#content").classList.toggle("hidden", !s.me);
   renderTeam(s); renderRunes(s); renderItems(s); renderSpells(s); renderGuide(s);
   $("#log pre").textContent = (s.log || []).join("\n");
 }
 
-for (const id of ["profile", "tier", "runeChoice", "flashKey"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.value }));
-for (const id of ["autoRunes", "autoItems", "autoSpells", "autoHover", "autoBan", "autoLock", "autoAccept", "alwaysOnTop", "overlay"]) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.checked }));
+for (const id of SELECTS) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.value }));
+for (const id of SWITCHES) $("#" + id).addEventListener("change", (e) => api.setSettings({ [id]: e.target.checked }));
+let lastState = null;
+const savePool = async () => {
+  if (!lastState || !api.setPool) return;
+  const r = await api.setPool({ profile: lastState.settings.profile, pool: $("#poolText").value, backups: $("#backupsText").value });
+  $("#poolMsg").textContent = r?.unknown?.length ? `Niet gevonden: ${r.unknown.join(", ")}. Schrijf de naam zoals in League (bv. Kha'Zix, Nidalee).` : "Opgeslagen. Leeg laten = standaard van het profiel.";
+};
+$("#poolText").addEventListener("change", savePool);
+$("#backupsText").addEventListener("change", savePool);
+$("#duoName").addEventListener("change", (e) => lastState && api.setDuo?.({ profile: lastState.settings.profile, name: e.target.value }));
 $("#reapply").addEventListener("click", () => api.reapply());
 document.addEventListener("click", (e) => { const el = e.target.closest("[data-enemy]"); if (el) api.setEnemy(Number(el.dataset.enemy)); });
 document.addEventListener("click", (e) => { const el = e.target.closest("[data-hover]"); if (el) api.hover(el.dataset.hover, Number(el.dataset.champ)); });

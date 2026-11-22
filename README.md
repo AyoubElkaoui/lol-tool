@@ -16,7 +16,8 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 ## Wat de tool doet
 - **Ban-fase:** top-5 bans voor jouw pool in jouw lane (waar je pool het slechtst tegen scoort) + wat de tegenstanders hoveren.
 - **Pick-fase (hoveren is genoeg):** runes (page "LoLTool …" actief), summoner spells, twee item sets ("standaard" en "vs team"), skill order, matchup-guide met winrate-badge.
-- **Pools (one-trick):** Ayoub alleen Rengar (jungle), Danny alleen Gangplank (top). Is je champ gebanned of gepakt, dan hovert de tool de beste counter pick tegen je tegenstander.
+- **Pools:** Ayoub mid: Irelia tegen een AD-team, Galio tegen een AP-team (3+ AD of AP bij hen en duidelijk meer dan het andere type; anders de beste van de twee op de data, bij twijfel Galio). Danny jungle: alleen Shaco. Is Shaco gebanned of gepakt, dan hovert en lockt de tool niets anders; Danny kiest dan zelf. Pool, backups en duo-naam pas je aan in de instellingen (namen met komma's; leeg = standaard).
+- **Duo:** de tool zoekt je duo in champ select en in de game (op Riot-naam, anders op lane). De guide krijgt een blok "Samen met …" met tips voor jullie twee champs (Galio/Irelia + Shaco en andersom).
 - **Runes en builds wisselen:** klik op een andere rune page of build; die wordt meteen in de client gezet. Rune-opties: **runes tegen je tegenstander** (uit de lolalytics-matchuppagina; in jungle tegen de vijandelijke jungler, standaard actief zodra hij bekend is, vanaf 200 games), meest gespeeld, hoogste winrate en u.gg (dubbele weg), plus een "vs dit team"-page (Tenacity bij veel CC, Health bij veel burst).
 - **Build tegen je tegenstander:** zodra de tegenstander in jouw lane bekend is (in jungle de vijandelijke jungler) komt de build uit de lolalytics-matchuppagina: item 1-3 wat tegen hem het meest gekocht wordt, item 4-6 de optie met de beste winrate (gecorrigeerd voor weinig games). Onder 200 games: de algemene build.
 - **Tegenstander zelf kiezen:** klopt de geschatte tegenstander niet, klik dan in "Counter picks" of "Hun team" op de juiste champ; runes, items en guide gaan mee. "↺ Automatisch" laat de tool weer zelf kiezen.
@@ -29,11 +30,17 @@ Download `LoL Tool Setup x.y.z.exe` uit de release en installeer. Verder hetzelf
 - **Data-status:** bovenin staat van welke patch en tier de data is. De tool pakt de nieuwste patch zodra daar genoeg games op staan, ook als de app open blijft staan.
 - **Update-melding:** staat er een nieuwe versie op GitHub, dan verschijnt bovenin een downloadlink.
 - **Hun team:** AD/AP/tank/healer-telling, boots-keuze met reden, defensief item als het nodig is, anti-heal-advies. Werkt live bij als tegenstanders bijkomen.
-- **Overlay in de game (nieuw):** klein paneel rechts in beeld met je CS/min, deaths, KP en control ward, het volgende item uit je build (en hoeveel goud je nog mist), wie bij hen fed is en welk item daartegen helpt, dode vijanden met respawntijd en de drake/Baron-respawn. Doorklikbaar; Ctrl+Shift+L zet hem aan/uit. Zet League op **Borderless** (in echt fullscreen kan niets over de game heen tekenen).
+- **Overlay in de game:** klein, doorklikbaar paneel met:
+  - je doelen live: CS/min, deaths, KP, vision/min en control ward (doelen per lane: jungle 5,5 CS/min en 60% KP, mid 7 CS/min);
+  - **meldingen:** power spikes (jij, je lane-tegenstander, hun jungler en je duo level 6; iemand heeft een item af), anti-tilt (2 deaths kort na elkaar, 3 deaths vóór 10 min) en "gekocht zonder control ward";
+  - **je duo:** level, KDA, voorsprong in items op zijn directe tegenstander, en wat je daarmee doet (meegaan, helpen, veilig spelen als hij dood is);
+  - jij tegen je lane-tegenstander, het volgende item uit je build, wie bij hen fed is en welk item daartegen helpt, dode vijanden, drake/Baron-respawn, en coach-tips (bijv. als een lane ver achter staat: daar niet blijven ganken).
+  - Positie (rechts, links, rechtsboven, linksboven), compact en per blok aan/uit in de instellingen. Ctrl+Shift+L zet hem aan/uit. Zet League op **Borderless** (in echt fullscreen kan niets over de game heen tekenen).
+- **Verliesreeks:** na 2 verloren games op rij een korte reset-tip, na 3 een pauze-advies bovenin de app.
 - **Data van jouw niveau:** tier staat standaard op automatisch: de tool leest je rank uit de client (Iron/Bronze → Bronze-data, Silver → Silver, Gold/Plat → Gold+).
-- **Matchup-feiten:** per tegenstander: of je korte of lange games beter wint, hoeveel first blood weegt, en je eigen record + gemiddelde deaths tegen die champ (laatste 40 games). Gangplank heeft daarnaast tips voor 17 toplaners.
+- **Matchup-feiten:** per tegenstander: of je korte of lange games beter wint, hoeveel first blood weegt, en je eigen record + gemiddelde deaths tegen die champ (laatste 40 games). Eigen tips voor Galio, Irelia (mid) en Shaco; Gangplank heeft er nog voor 17 toplaners.
 - **Na de game:** KDA, CS/min, vision en 1-2 concrete werkpunten.
-- **Instellingen:** profiel (Ayoub jungle: Rengar / Danny top: Gangplank), tier, rune-keuze, auto runes/items/spells, automatisch bannen/locken, ready check auto-accepteren, venster altijd bovenaan.
+- **Instellingen:** profiel (Ayoub mid: Galio/Irelia / Danny jungle: Shaco), pool, backups, duo-naam, overlay-opties, tier, rune-keuze, auto runes/items/spells, automatisch bannen/locken, ready check auto-accepteren, venster altijd bovenaan.
 
 ## Hoe het werkt
 - Leest de League-client via de lokale LCU-API (lockfile), niets wordt in de Riot-mappen geschreven.
