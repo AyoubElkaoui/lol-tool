@@ -22,7 +22,7 @@ body { margin: 0; background: radial-gradient(1200px 600px at 20% -10%, #10213a 
 .btn:hover { background: rgba(200,170,110,.08); border-color: var(--gold); }
 
 /* settings drawer */
-.settings { position: fixed; right: 16px; top: 58px; width: 300px; background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; padding: 16px; z-index: 6; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.settings { position: fixed; right: 16px; top: 58px; width: 300px; max-height: calc(100vh - 74px); overflow-y: auto; overscroll-behavior: contain; background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; padding: 16px; z-index: 6; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
 .settings.hidden { display: none; }
 .settings h3 { margin: 0 0 12px; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gold); }
 .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: 12px; color: var(--muted); }
