@@ -26,6 +26,18 @@
     .alert.bad { border-color: #ff9a5e; background: rgba(255,154,94,.10); }
     .tip { margin: 4px 0; color: #d9cfb8; }
     .tip.ok { color: #4fd18b; } .tip.bad { color: #ff9a5e; } .tip.warn { color: #ff6b5e; }
+    .items { gap: 3px; }
+    .items .big img { border-color: #c8aa6e; }
+    .team { display: flex; gap: 4px; margin-top: 3px; }
+    .mate { position: relative; display: flex; flex-direction: column; align-items: center; width: 56px; }
+    .mate img { width: 30px; height: 30px; border: 1px solid #463714; border-radius: 3px; }
+    .mate i { position: absolute; top: 18px; left: 33px; font-style: normal; font-size: 10px; background: #010a13; border: 1px solid #463714; border-radius: 3px; padding: 0 3px; }
+    .mate small { font-size: 10px; color: #a09b8c; }
+    .mate.fed img { border-color: #ff6b5e; box-shadow: 0 0 4px #ff6b5e; }
+    .mate.fed small { color: #ff6b5e; }
+    .mate.mine img { border-color: #c8aa6e; }
+    .mate.dead img { filter: grayscale(1) brightness(.5); }
+    .mate.dead i { color: #0ac8b9; }
   </style>
 </head>
 <body>

@@ -676,7 +676,7 @@ async function processEndOfGame() {
 // "Windowed" staat (bij echt fullscreen tekent Windows niets over de game heen).
 // Ctrl+Shift+L zet hem aan/uit.
 let overlay = null, overlayHidden = false, liveBusy = false, liveFails = 0;
-const OVERLAY_W = 330, OVERLAY_H = 520;
+const OVERLAY_W = 340, OVERLAY_H = 640;
 function overlayBounds() {
   const b = screen.getPrimaryDisplay().bounds;
   const right = b.x + b.width - OVERLAY_W - 12, left = b.x + 12;
@@ -722,6 +722,7 @@ async function liveTick() {
       itemData, champs, plan, targets: goals.targetsFor(lane), vpmMin: goals.vpmTarget(lane),
       lane, laneEnemyId: state.enemy?.id || null, roles: state.enemyRoles || {}, duo: p.duo || null,
       show: { duo: settings.overlayDuo, spikes: settings.overlaySpikes, coach: settings.overlayCoach },
+      tips: (state.guide?.sections || []).filter((x) => state.enemy && (x.title.startsWith("Tegen " + state.enemy.name) || x.title.startsWith("Deze matchup"))).flatMap((x) => x.items).filter((x) => !/^Jouw eigen games/.test(x)),
     });
     if (!lv || (d.gameData?.gameTime || 0) < 5) { hideOverlay(); return; } // laadscherm
     const o = ensureOverlay();

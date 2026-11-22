@@ -127,7 +127,53 @@ function duoView({ duo, duoOpp, cfg, me, t, itemData, champ, lane }) {
  * plan: { build: [itemIds in volgorde], extra: [overige items die jouw champ bouwt] }
  * ctx (optioneel): { lane, laneEnemyId, duo: { name, lane, riotName }, show: { duo, spikes, coach }, vpmMin }
  */
-function analyse(d, { itemData, champs, plan, targets, lane = null, laneEnemyId = null, roles = {}, duo: duoCfg = null, show = {}, vpmMin = 0.8 }) {
+// Wat je tegenstander bouwt en heeft: items, level, CS, spells, en wat jij daartegen doet.
+const SPELL_TIP = {
+  ignite: "Ignite: hij zoekt een kill op level 2-3. Niet laag blijven staan.",
+  exhaust: "Exhaust: je all-in doet minder; wacht tot hij hem gebruikt heeft.",
+  teleport: "Teleport: als hij weg is uit lane kan hij zo terug of naar bot.",
+  ghost: "Ghost: hij kan je achtervolgen en weglopen; niet ver doorjagen.",
+  cleanse: "Cleanse: je stun/root kan hij weghalen.",
+  barrier: "Barrier: bij een all-in krijgt hij een schild; reken op meer damage.",
+  heal: "Heal: hij healt en wordt sneller bij een all-in.",
+};
+const spellKey = (sp) => String(sp?.rawDisplayName || sp?.displayName || "").toLowerCase().match(/ignite|dot|exhaust|teleport|haste|ghost|boost|cleanse|barrier|heal/)?.[0];
+const SPELL_ALIAS = { dot: "ignite", haste: "ghost", boost: "cleanse" };
+function opponentView(p, me, { itemData, plan, champ, tips, t }) {
+  if (!p) return null;
+  const s = p.scores || {}, ms = me.scores || {};
+  const items = (p.items || []).filter((i) => itemData[i.itemID] && !itemData[i.itemID].tags.includes("Trinket") && i.itemID !== CONTROL_WARD);
+  const big = items.filter((i) => (itemData[i.itemID]?.gold || 0) >= LEGENDARY_GOLD).map((i) => i.itemID);
+  const owned = new Set((me.items || []).map((i) => i.itemID));
+  const pool = [...(plan?.build || []), ...(plan?.extra || [])].map((id) => itemData[id]).filter((it) => it && !owned.has(it.id));
+  const def = (tag) => items.filter((i) => { const it = itemData[i.itemID]; return it?.tags.includes(tag) && !it.tags.includes("Boots"); }).length;
+  const armor = def("Armor"), mr = def("SpellBlock");
+  // %-penetratie (Lord Dominik's, Void Staff) eerst; lethality helpt minder tegen veel armor.
+  const penFor = (tag) => pool.find((x) => x.pctPen && x.tags.includes(tag)) || pool.find((x) => x.tags.includes(tag));
+  let counter = null;
+  if (armor >= 2) { const it = penFor("ArmorPenetration"); if (it) counter = { id: it.id, text: `Hij bouwt armor (${armor} items): ${it.name} eerder kopen.` }; }
+  else if (mr >= 2) { const it = penFor("MagicPenetration"); if (it) counter = { id: it.id, text: `Hij bouwt magic resist (${mr} items): ${it.name} eerder kopen.` }; }
+  const levelDiff = (me.level || 0) - (p.level || 0);
+  const csDiff = (ms.creepScore || 0) - (s.creepScore || 0);
+  const spells = ["summonerSpellOne", "summonerSpellTwo"].map((k) => { const k2 = spellKey(p.summonerSpells?.[k]); return SPELL_ALIAS[k2] || k2; }).filter(Boolean);
+  const spellTips = spells.map((k) => SPELL_TIP[k]).filter(Boolean);
+  // Eén matchup-tip tegelijk, wisselt elke 25 seconden.
+  const list = [...(tips || []), ...spellTips];
+  const tip = list.length ? list[Math.floor(t / 25) % list.length] : null;
+  const warn = [];
+  if (levelDiff <= -1 && (p.level || 0) >= 6 && (me.level || 0) < 6) warn.push("Hij heeft zijn ult al en jij niet: niet trades aangaan.");
+  else if (levelDiff <= -2) warn.push(`Hij is ${-levelDiff} levels hoger: speel veilig tot je bij bent.`);
+  else if (levelDiff >= 1 && (me.level || 0) >= 6 && (p.level || 0) < 6) warn.push("Jij hebt je ult en hij niet: dit is je moment voor een trade.");
+  if (p.isDead) warn.push(`${champ?.name || p.championName} is dood (${Math.round(p.respawnTimer)}s): push je wave en pak plates of help je team.`);
+  return {
+    name: champ?.name || p.championName, img: champ?.image || null, level: p.level || 0, levelDiff,
+    kda: `${s.kills || 0}/${s.deaths || 0}/${s.assists || 0}`, cs: s.creepScore || 0, csDiff,
+    items: items.map((i) => i.itemID).slice(0, 6), big, counter, spells, tip, warn,
+    dead: !!p.isDead,
+  };
+}
+
+function analyse(d, { itemData, champs, plan, targets, lane = null, laneEnemyId = null, roles = {}, duo: duoCfg = null, show = {}, vpmMin = 0.8, tips = [] }) {
   const champsBySlug = Object.fromEntries(Object.values(champs).map((c) => [c.slug, c]));
   const champsByName = Object.fromEntries(Object.values(champs).map((c) => [c.name, c]));
   const ap = d.activePlayer || {};
@@ -259,8 +305,17 @@ function analyse(d, { itemData, champs, plan, targets, lane = null, laneEnemyId 
   m.fresh = false;
   m.alerts = m.alerts.filter((a) => a.until > t);
 
+  // Je directe tegenstander uitgebreid, en hun hele team in één rij (level, KDA, dood).
+  const opp = opponentView(laneOpp, me, { itemData, plan, champ: laneOpp ? champOfP(laneOpp) : null, tips, t });
+  const enemyTeam = rows.map((r) => ({
+    name: r.champ?.name || r.p.championName, img: r.champ?.image || null, level: r.p.level || 0,
+    kda: `${r.p.scores?.kills || 0}/${r.p.scores?.deaths || 0}/${r.p.scores?.assists || 0}`,
+    fed: r.gold > avg * 1.25 && r.gold > 1500, dead: !!r.p.isDead, secs: r.p.isDead ? Math.round(r.p.respawnTimer) : 0,
+    me: r.p === laneOpp,
+  }));
+
   return {
-    time: mmss(t), threat, next, gold, timers, dead, goals, champ: myChamp?.name || me.championName,
+    time: mmss(t), threat, next, gold, timers, dead, goals, champ: myChamp?.name || me.championName, opp, enemyTeam,
     duo, alerts: m.alerts.slice(-4).map(({ text, cls }) => ({ text, cls })), coach,
     lane: laneOpp ? { name: champOfP(laneOpp)?.name || laneOpp.championName, level: laneOpp.level || 0, diff: k1(myGold - itemGold(laneOpp, itemData)) } : null,
   };
