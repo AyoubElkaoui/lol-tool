@@ -675,7 +675,7 @@ async function processEndOfGame() {
 // Klein, doorklikbaar paneel rechts in beeld. Werkt alleen als League in "Borderless" of
 // "Windowed" staat (bij echt fullscreen tekent Windows niets over de game heen).
 // Ctrl+Shift+L zet hem aan/uit.
-let overlay = null, overlayHidden = false, liveBusy = false, liveFails = 0;
+let overlay = null, overlayHidden = false, liveBusy = false, liveFails = 0, lastFront = null, lastLiveErr = "";
 const OVERLAY_W = 340, OVERLAY_H = 640;
 function overlayBounds() {
   const b = screen.getPrimaryDisplay().bounds;
@@ -690,6 +690,8 @@ function ensureOverlay() {
     ...overlayBounds(),
     frame: false, transparent: true, resizable: false, movable: false, focusable: false, skipTaskbar: true,
     alwaysOnTop: true, hasShadow: false, show: false,
+    // Mac: een "panel" mag over een fullscreen-app (de game in zijn eigen Space) heen tekenen.
+    ...(process.platform === "darwin" ? { type: "panel", fullscreenable: false } : {}),
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false },
   });
   overlay.setAlwaysOnTop(true, "screen-saver");
@@ -705,11 +707,13 @@ async function liveTick() {
   if (liveBusy) return;
   if (!settings.overlay || overlayHidden || state.phase !== "InProgress") { hideOverlay(); fg.stop(); return; }
   // Alleen tonen als de game zelf vooraan staat: niet in het laadscherm, de client of na alt-tab.
-  if (!fg.gameInFront()) { hideOverlay(); return; }
+  const front = fg.gameInFront();
+  if (fg.current() !== lastFront) { lastFront = fg.current(); log(`Overlay: voorgrond = ${lastFront || "?"} → ${front ? "tonen" : "verbergen"}`); }
+  if (!front) { hideOverlay(); return; }
   liveBusy = true;
   try {
     const d = await live.allGameData();
-    liveFails = 0;
+    liveFails = 0; lastLiveErr = "";
     const [itemData, champs, urls] = await Promise.all([dd.items(), dd.champions(), dd.imageUrls()]);
     const opts = state.items?.options || {};
     const plan = {
@@ -733,8 +737,9 @@ async function liveTick() {
       o.setAlwaysOnTop(true, "screen-saver", 1);
       o.moveTop();
     }
-  } catch {
-    // Laadscherm of game net klaar: API nog/niet meer bereikbaar.
+  } catch (e) {
+    // Laadscherm of game net klaar: API nog/niet meer bereikbaar. Eén keer per soort fout loggen.
+    if (e?.message !== lastLiveErr) { lastLiveErr = e?.message; log("Overlay: game-data niet bereikbaar (" + (e?.message || e) + ")"); }
     if (++liveFails > 3) hideOverlay();
   } finally { liveBusy = false; }
 }

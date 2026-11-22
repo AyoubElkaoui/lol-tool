@@ -9,7 +9,7 @@ const guide = require("./guide");
 
 function get(path) {
   return new Promise((resolve, reject) => {
-    const req = https.get({ host: "127.0.0.1", port: 2999, path, rejectUnauthorized: false, timeout: 1500 }, (res) => {
+    const req = https.get({ host: "127.0.0.1", port: 2999, path, rejectUnauthorized: false, timeout: 3000 }, (res) => {
       let buf = "";
       res.on("data", (d) => (buf += d));
       res.on("end", () => {
