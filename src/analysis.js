@@ -110,14 +110,24 @@ function styleOf(ids, itemData) {
   return tank >= 2 ? "tank" : tank === 0 && hybrid <= 1 ? "damage" : "mixed";
 }
 const STYLE_LABEL = { damage: "Full damage", tank: "Tank" };
+// Bouwt deze build AP (Nashor's, Dusk and Dawn) of AD? Een AP-build op een AD-champ
+// (Xin Zhao met Statikk + Dusk and Dawn) is een niche, geen "full damage"-versie van de standaard.
+const isAp = (ids, itemData) => ids.slice(0, 3).filter((id) => itemData[id]?.tags.includes("SpellDamage")).length >= 2;
+// Een stijl mag de standaard alleen vervangen als hij niet duidelijk slechter wint en genoeg games heeft.
+const STYLE_MIN_GAMES = 200;
+const STYLE_MAX_WR_DROP = 2;
+
 function styles({ builds, itemData }) {
   const list = (builds || []).filter((b) => b.items.length >= 3 && b.items.every((id) => itemData[id]));
   const total = list.reduce((s, b) => s + b.picks, 0) || 1;
   const std = list[0] ? styleOf(list[0].items, itemData) : null;
+  const stdAp = list[0] ? isAp(list[0].items, itemData) : false;
+  const stdWr = list[0]?.wr || 0;
   const out = {};
   for (const key of ["damage", "tank"]) {
     if (key === std) continue; // de standaard-build ís al deze stijl
-    const group = list.filter((b) => styleOf(b.items, itemData) === key);
+    const group = list.filter((b) => styleOf(b.items, itemData) === key && isAp(b.items, itemData) === stdAp
+      && b.picks >= STYLE_MIN_GAMES && b.wr >= stdWr - STYLE_MAX_WR_DROP);
     const picks = group.reduce((s, b) => s + b.picks, 0);
     const top = group[0]; // builds staan op aantal games
     if (!top || top.picks < 50 || picks / total < 0.02) continue;

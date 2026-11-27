@@ -24,14 +24,13 @@ const PROFILES = {
   // pool: je eigen champs (eerste = main). backups: pas als de pool weg is (gebanned/gepakt).
   // oneTrick: de main altijd bovenaan zolang hij vrij is. comp: champ uit je pool die beter past
   // bij hun team (Irelia tegen een AD-team). duo: met wie je speelt en in welke lane hij staat.
-  // Ayoub: AD-team → Irelia, AP-team → Galio; gemengd = de beste van de twee op de data (bij twijfel Galio).
-  ayoub: { name: "Ayoub", lane: "middle", pool: ["galio", "irelia"], favorite: "galio", teamPick: true, compStrict: true,
-    comp: [{ slug: "irelia", when: "ad" }, { slug: "galio", when: "ap" }],
-    duo: { name: "Danny", lane: "jungle", riotName: "EversD" } },
-  // Danny speelt alleen Shaco: geen backups, en is Shaco weg dan hovert/lockt de tool niets anders.
-  danny: { name: "Danny", lane: "jungle", pool: ["shaco"], favorite: "shaco", oneTrick: true, onlyMain: true, teamPick: true,
+  // Ayoub (sinds 27-11-2026): jungle, Xin Zhao main; Viego en Wukong als Xin weg is of slecht past.
+  ayoub: { name: "Ayoub", lane: "jungle", pool: ["xinzhao", "viego", "wukong"], favorite: "xinzhao", teamPick: true,
+    duo: { name: "Danny", lane: "middle", riotName: "EversD" } },
+  // Danny (sinds 27-11-2026): mid, Katarina main; Cassiopeia en Talon als Kat weg is of slecht past.
+  danny: { name: "Danny", lane: "middle", pool: ["katarina", "cassiopeia", "talon"], favorite: "katarina", teamPick: true,
     backups: [],
-    duo: { name: "Ayoub", lane: "middle", riotName: "Qyoub" } },
+    duo: { name: "Ayoub", lane: "jungle", riotName: "Qyoub" } },
 };
 
 // Profiel met de eigen aanpassingen uit de instellingen (pool/backups/duo-naam).
