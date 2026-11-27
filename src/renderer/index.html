@@ -22,12 +22,12 @@
       <h3>Instellingen</h3>
       <label class="field"><span>Profiel</span>
         <select id="profile">
-          <option value="ayoub">Ayoub (jungle: Xin Zhao · Viego · Wukong)</option>
-          <option value="danny">Danny (mid: Katarina · Cassiopeia · Talon)</option>
+          <option value="ayoub">Ayoub (mid: Galio · Irelia)</option>
+          <option value="danny">Danny (jungle: Shaco · Fiddlesticks · Gwen)</option>
         </select>
       </label>
       <label class="field"><span>Champion pool <small>(eerste = main, komma's ertussen)</small></span>
-        <input id="poolText" type="text" placeholder="Xin Zhao, Viego, Wukong" spellcheck="false" />
+        <input id="poolText" type="text" placeholder="Galio, Irelia" spellcheck="false" />
       </label>
       <label class="field"><span>Backups <small>(alleen als je pool gebanned/gepakt is)</small></span>
         <input id="backupsText" type="text" placeholder="Rengar, Kha'Zix" spellcheck="false" />
@@ -61,8 +61,8 @@
       <label class="switch"><input type="checkbox" id="autoItems" /><span>Item sets automatisch zetten</span></label>
       <label class="switch"><input type="checkbox" id="autoSpells" /><span>Summoner spells automatisch zetten</span></label>
       <label class="switch"><input type="checkbox" id="autoHover" /><span>Beste ban en pick automatisch hoveren</span></label>
-      <label class="switch"><input type="checkbox" id="autoBan" /><span>Automatisch bannen (laatste 8 sec van je beurt)</span></label>
-      <label class="switch"><input type="checkbox" id="autoLock" /><span>Automatisch locken (laatste 8 sec van je beurt)</span></label>
+      <label class="switch"><input type="checkbox" id="autoBan" /><span>Automatisch bannen (laatste 10 sec van je beurt)</span></label>
+      <label class="switch"><input type="checkbox" id="autoLock" /><span>Automatisch locken (laatste 10 sec van je beurt)</span></label>
       <label class="switch"><input type="checkbox" id="autoAccept" /><span>Ready check automatisch accepteren</span></label>
       <label class="switch"><input type="checkbox" id="alwaysOnTop" /><span>Venster altijd bovenaan</span></label>
       <label class="switch"><input type="checkbox" id="overlay" /><span>Overlay in de game (Ctrl+Shift+L aan/uit; League op Borderless zetten)</span></label>
@@ -78,7 +78,7 @@
       <label class="switch"><input type="checkbox" id="overlayDuo" /><span>Overlay: je duo (level, voorsprong, wanneer samen spelen)</span></label>
       <label class="switch"><input type="checkbox" id="overlaySpikes" /><span>Overlay: power spikes (level 6, items af)</span></label>
       <label class="switch"><input type="checkbox" id="overlayCoach" /><span>Overlay: coach (anti-tilt, control wards, vision)</span></label>
-      <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen sets blijven staan. Automatisch bannen/locken staat standaard uit. Wat de tool doet staat ook in log.txt (map %APPDATA%\LoL Tool). Aan: de tool wacht tot de laatste 8 seconden van je beurt en bant/lockt wat er gehoverd staat; hover je zelf iets, dan wordt dát het.</p>
+      <p class="hint">Alles wat de tool aanmaakt heet "LoLTool …". Je eigen sets blijven staan. Automatisch bannen/locken staat standaard uit. Wat de tool doet staat ook in log.txt (map %APPDATA%\LoL Tool). Aan: de tool wacht tot de laatste 10 seconden van je beurt en bant/lockt wat er gehoverd staat; hover je zelf iets, dan wordt dát het.</p>
     </aside>
 
     <main id="main">

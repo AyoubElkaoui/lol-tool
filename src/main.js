@@ -24,13 +24,13 @@ const PROFILES = {
   // pool: je eigen champs (eerste = main). backups: pas als de pool weg is (gebanned/gepakt).
   // oneTrick: de main altijd bovenaan zolang hij vrij is. comp: champ uit je pool die beter past
   // bij hun team (Irelia tegen een AD-team). duo: met wie je speelt en in welke lane hij staat.
-  // Ayoub (sinds 27-11-2026): jungle, Xin Zhao main; Viego en Wukong als Xin weg is of slecht past.
-  ayoub: { name: "Ayoub", lane: "jungle", pool: ["xinzhao", "viego", "wukong"], favorite: "xinzhao", teamPick: true,
-    duo: { name: "Danny", lane: "middle", riotName: "EversD" } },
-  // Danny (sinds 27-11-2026): mid, Katarina main; Cassiopeia en Talon als Kat weg is of slecht past.
-  danny: { name: "Danny", lane: "middle", pool: ["katarina", "cassiopeia", "talon"], favorite: "katarina", teamPick: true,
+  // Ayoub (sinds 27-11-2026, middag): mid, Galio sowieso; Irelia alleen als Galio weg is.
+  ayoub: { name: "Ayoub", lane: "middle", pool: ["galio", "irelia"], favorite: "galio", oneTrick: true, teamPick: true,
+    duo: { name: "Danny", lane: "jungle", riotName: "EversD" } },
+  // Danny (sinds 27-11-2026, middag): jungle, Shaco main; Fiddlesticks en Gwen als Shaco weg is of slecht past.
+  danny: { name: "Danny", lane: "jungle", pool: ["shaco", "fiddlesticks", "gwen"], favorite: "shaco", teamPick: true,
     backups: [],
-    duo: { name: "Ayoub", lane: "jungle", riotName: "Qyoub" } },
+    duo: { name: "Ayoub", lane: "middle", riotName: "Qyoub" } },
 };
 
 // Profiel met de eigen aanpassingen uit de instellingen (pool/backups/duo-naam).
@@ -84,7 +84,7 @@ let autoPickId = 0, autoBanId = 0, autoTried = "", lockTried = "";
 let manualEnemyId = 0;
 // Automatisch bannen/locken gebeurt pas in de laatste seconden van je beurt, zodat je zelf
 // nog iets anders kunt kiezen. De tool lockt wat er gehoverd staat (jouw keuze gaat voor).
-const LOCK_AT_MS = 8000;
+const LOCK_AT_MS = 10000;
 // Handmatige keuze in de app (klik op een rune page of build); null = standaard uit de instellingen.
 // runeKey = label van de gekozen page, zodat de keuze blijft staan als de lijst verandert.
 let lastStyleKey = "";
