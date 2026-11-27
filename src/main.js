@@ -584,19 +584,33 @@ async function completeAction(action, championId) {
 
 let lockTriedAt = 0, lockDebugged = "";
 const lockDone = new Map(); // actionId -> tijd van gelukte lock; na 3 s nog open = opnieuw proberen
+const lockFailLogged = new Set();
+// Eigen klok per beurt: wanneer zagen we deze actie (in deze fase) voor het eerst en hoeveel tijd
+// stond er toen. De timer van de client is niet altijd actueel; de kleinste van de twee telt.
+const turnSeen = new Map();
+function turnLeft(action, timer) {
+  const left = timeLeft(timer);
+  const key = `${action.id}|${timer?.phase || ""}`;
+  if (!turnSeen.has(key)) turnSeen.set(key, { at: Date.now(), left });
+  const seen = turnSeen.get(key);
+  const own = Number.isFinite(seen.left) ? seen.left - (Date.now() - seen.at) : Infinity;
+  return Math.min(left, own);
+}
 async function autoLock(session, champs) {
-  const left = timeLeft(session.timer);
   // Eén keer per beurt loggen wat de tool ziet, zodat een mislukte lock te verklaren is.
   for (const type of ["ban", "pick"]) {
     const a = myAction(session, type);
-    if (a?.isInProgress && lockDebugged !== `${a.id}`) { lockDebugged = `${a.id}`; log(`Jouw ${type}-beurt: ${Number.isFinite(left) ? Math.round(left / 1000) + "s" : "geen timer"}, fase ${session.timer?.phase || "?"}, gehoverd ${champs[a.championId]?.name || "niets"}`); }
+    const key = `${a?.id}|${session.timer?.phase || ""}`;
+    if (a?.isInProgress && lockDebugged !== key) { lockDebugged = key; const left = turnLeft(a, session.timer); log(`Jouw ${type}-beurt: ${Number.isFinite(left) ? Math.round(left / 1000) + "s" : "geen timer"}, fase ${session.timer?.phase || "?"}, gehoverd ${champs[a.championId]?.name || "niets"}`); }
   }
-  if (left > LOCK_AT_MS || session.timer?.phase === "PLANNING") return; // in PLANNING kan bannen nog niet
   const taken = takenIds(session);
   for (const type of ["ban", "pick"]) {
     if (!(type === "ban" ? settings.autoBan : settings.autoLock)) continue;
     const action = myAction(session, type);
     if (!action?.isInProgress) continue;
+    // Niet op de fase-naam vertrouwen: in de huidige ranked-flow staat je ban al open terwijl de
+    // client nog "PLANNING" meldt. Lukt het daar niet, dan probeert de lus het gewoon opnieuw.
+    if (turnLeft(action, session.timer) > LOCK_AT_MS) continue;
     // Gehoverde champ die intussen gebanned/gepakt is kan niet meer: dan de beste vrije.
     let championId = action.championId;
     if (!championId || (type === "pick" && taken.has(championId) && !(session.myTeam || []).some((p) => p.cellId === session.localPlayerCellId && p.championId === championId))) {
@@ -605,14 +619,19 @@ async function autoLock(session, champs) {
     if (!championId) { if (lockTried !== `${action.id}:none`) { lockTried = `${action.id}:none`; log(`Auto ${type}: geen champ om te ${type === "ban" ? "bannen" : "locken"} (data nog niet geladen?)`); } continue; }
     const attempt = `${action.id}:${championId}`;
     if (attempt === lockTried && Date.now() - lockTriedAt < 1500) continue; // client weigerde: even wachten
-    if (lockDone.has(action.id) && Date.now() - lockDone.get(action.id) < 3000) continue; // al gelukt; de client werkt de session even later bij
+    if (lockDone.has(action.id) && Date.now() - lockDone.get(action.id) < 2000) continue; // al gelukt; de client werkt de session even later bij
     lockTried = attempt; lockTriedAt = Date.now();
     const name = champs[championId]?.name || championId;
+    const retry = lockDone.has(action.id);
     try {
       await completeAction(action, championId);
       lockDone.set(action.id, Date.now());
-      log(type === "ban" ? `Automatisch gebanned: ${name}` : `Automatisch gelockt: ${name}`);
-    } catch (e) { log(`${type === "ban" ? "Bannen" : "Locken"} mislukt (${name}): ${e.message}`); }
+      if (!retry) log(type === "ban" ? `Automatisch gebanned: ${name}` : `Automatisch gelockt: ${name}`);
+    } catch (e) {
+      // Eén keer per beurt/fase loggen; de lus blijft het elke 1,5 s proberen tot de tijd op is.
+      const k = `${action.id}|${session.timer?.phase || ""}`;
+      if (!lockFailLogged.has(k)) { lockFailLogged.add(k); log(`${type === "ban" ? "Bannen" : "Locken"} mislukt (${name}, fase ${session.timer?.phase || "?"}): ${e.message}; probeer opnieuw`); }
+    }
   }
 }
 
@@ -638,7 +657,7 @@ async function processChampSelect(session) {
 }
 
 // Bannen/locken in een eigen, snelle lus: de gewone tick wacht soms seconden op lolalytics
-// en mist dan de laatste 8 seconden van je beurt.
+// en mist dan de laatste 10 seconden van je beurt.
 let lockBusy = false;
 async function lockTick() {
   if (lockBusy || !lcu.connected || state.phase !== "ChampSelect" || !(settings.autoBan || settings.autoLock)) return;
@@ -756,7 +775,7 @@ async function tick() {
   if (phase === "None" && !(await lcu.connect())) { state.client = "zoeken"; lastKey = ""; lastBanKey = ""; lastPickKey = ""; push(); return; }
   if (phase !== state.phase) {
     state.phase = phase;
-    if (phase === "ChampSelect") { Object.assign(state, blank()); runeKey = null; buildIdx = null; baseItems = null; baseRunes = null; state.postgame = null; autoPickId = 0; autoBanId = 0; autoTried = ""; lockTried = ""; lockDone.clear(); manualEnemyId = 0; refreshMyStats(); lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
+    if (phase === "ChampSelect") { Object.assign(state, blank()); runeKey = null; buildIdx = null; baseItems = null; baseRunes = null; state.postgame = null; autoPickId = 0; autoBanId = 0; autoTried = ""; lockTried = ""; lockDone.clear(); turnSeen.clear(); lockFailLogged.clear(); lockDebugged = ""; manualEnemyId = 0; refreshMyStats(); lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
     if (phase === "Lobby" || phase === "Matchmaking") { lastKey = ""; lastBanKey = ""; lastPickKey = ""; }
     push();
   }
